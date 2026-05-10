@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GESLAB — Wireframes de Interfaz v1.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- ✅ CORRECCIÓN: ruta relativa (era ruta absoluta Windows → roto en otros equipos) -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+
+<!-- ████████████████████████████████████████████
+     ROLE SELECTOR
+     Barra superior para cambiar de rol en el prototipo.
+     En producción esta lógica la maneja el backend (JWT + RBAC).
+████████████████████████████████████████████ -->
+<div id="role-selector">
+  <span class="rs-label">Rol activo</span>
+  <button class="role-tab active" onclick="switchRole('sa')">Super Administrador</button>
+  <button class="role-tab"        onclick="switchRole('adm')">Administrador</button>
+  <button class="role-tab"        onclick="switchRole('mod')">Moderador</button>
+  <button class="role-tab"        onclick="switchRole('age')">Agente</button>
+</div>
+
+
+<!-- ████████████████████████████████████████████
+     APP SHELL
+     Estructura principal: Topbar + Sidebar + Contenido
+████████████████████████████████████████████ -->
+<div id="app-shell">
+
+  <!-- ── TOPBAR ─────────────────────────────── -->
+  <div id="topbar">
+    <span class="tb-logo">GES<span>LAB</span></span>
+    <span class="tb-role-badge" id="role-badge">Super Admin</span>
+    <span class="tb-spacer"></span>
+    <!-- API: nombre de empresa desde sesión/tenant -->
+    <span class="tb-company" id="company-name">—</span>
+    <button class="tb-notif" onclick="openModal('modal-notif')">
+      🔔<span class="badge" id="notif-count">0</span>
+    </button>
+    <div class="tb-avatar" id="user-avatar" style="background:var(--sa-color)">SA</div>
+  </div>
+
+  <!-- ── BODY LAYOUT: Sidebar + Content ──────── -->
+  <div id="body-layout">
+
+    <!-- ────────────────────────────────────────
+         SIDEBAR
+         Navegación por rol — Solo el nav del rol
+         activo se muestra (clase .active gestionada en JS).
+    ──────────────────────────────────────────── -->
+    <div id="sidebar">
+
+      <!-- NAV: Super Administrador -->
+      <nav class="role-nav active" data-role="sa">
+        <div style="height:4px; background:var(--sa-color);"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Principal</div>
+          <button class="sb-item active" onclick="showScreen('sa-dashboard',this)">
+            <span class="icon">🏠</span> Dashboard
+          </button>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Administración</div>
+          <button class="sb-item" onclick="showScreen('sa-users',this)">
+            <span class="icon">👥</span> Usuarios y Roles
+          </button>
+          <button class="sb-item" onclick="showScreen('sa-config',this)">
+            <span class="icon">⚙️</span> Configuración
+          </button>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Bienestar</div>
+          <button class="sb-item" onclick="showScreen('sa-wellness',this)">
+            <span class="icon">💚</span> Bienestar &amp; Encuestas
+            <!-- API: contador de alertas sin leer -->
+            <span class="sb-count" id="sb-count-sa-wellness">0</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- NAV: Administrador -->
+      <nav class="role-nav" data-role="adm">
+        <div style="height:4px; background:var(--adm-color);"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Principal</div>
+          <button class="sb-item active" onclick="showScreen('adm-dashboard',this)">
+            <span class="icon">🏠</span> Dashboard
+          </button>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Gestión</div>
+          <button class="sb-item" onclick="showScreen('adm-novelties',this)">
+            <span class="icon">📋</span> Buzón de Novedades
+          </button>
+          <button class="sb-item" onclick="showScreen('adm-schedules',this)">
+            <span class="icon">📅</span> Mallas de Turnos
+          </button>
+          <button class="sb-item" onclick="showScreen('adm-requests',this)">
+            <span class="icon">📥</span> Buzón de Solicitudes
+            <!-- API: solicitudes pendientes de decisión -->
+            <span class="sb-count" id="sb-count-adm-requests">0</span>
+          </button>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Análisis</div>
+          <button class="sb-item" onclick="showScreen('adm-wellness',this)">
+            <span class="icon">💚</span> Bienestar
+            <!-- API: alertas bienestar sin leer -->
+            <span class="sb-count" id="sb-count-adm-wellness">0</span>
+          </button>
+          <button class="sb-item" onclick="showScreen('adm-reports',this)">
+            <span class="icon">📊</span> Reportes
+          </button>
+        </div>
+      </nav>
+
+      <!-- NAV: Moderador -->
+      <nav class="role-nav" data-role="mod">
+        <div style="height:4px; background:var(--mod-color);"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Principal</div>
+          <button class="sb-item active" onclick="showScreen('mod-dashboard',this)">
+            <span class="icon">🏠</span> Dashboard
+          </button>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Mi equipo</div>
+          <button class="sb-item" onclick="showScreen('mod-schedule',this)">
+            <span class="icon">📅</span> Malla del Equipo
+          </button>
+          <button class="sb-item" onclick="showScreen('mod-requests',this)">
+            <span class="icon">📥</span> Solicitudes
+            <!-- API: solicitudes pendientes de revisión -->
+            <span class="sb-count" id="sb-count-mod-requests">0</span>
+          </button>
+          <button class="sb-item" onclick="showScreen('mod-novelties',this)">
+            <span class="icon">📋</span> Novedades
+          </button>
+          <button class="sb-item" onclick="showScreen('mod-wellness',this)">
+            <span class="icon">💚</span> Bienestar
+            <!-- API: alertas bienestar del equipo -->
+            <span class="sb-count" id="sb-count-mod-wellness">0</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- NAV: Agente -->
+      <nav class="role-nav" data-role="age">
+        <div style="height:4px; background:var(--age-color);"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Principal</div>
+          <button class="sb-item active" onclick="showScreen('age-dashboard',this)">
+            <span class="icon">🏠</span> Dashboard
+          </button>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-section-label">Personal</div>
+          <button class="sb-item" onclick="showScreen('age-shifts',this)">
+            <span class="icon">📅</span> Mis Turnos
+          </button>
+          <button class="sb-item" onclick="showScreen('age-requests',this)">
+            <span class="icon">📤</span> Mis Solicitudes
+          </button>
+          <button class="sb-item" onclick="showScreen('age-wellness',this)">
+            <span class="icon">💚</span> Mi Bienestar
+            <!-- API: encuestas pendientes de responder -->
+            <span class="sb-count" id="sb-count-age-wellness">0</span>
+          </button>
+        </div>
+      </nav>
+
+    </div><!-- /sidebar -->
+
+
+    <!-- ████████████████████████████████████████
+         CONTENT AREA
+         Todas las pantallas viven aquí.
+         Solo la pantalla con clase .active es visible.
+    ████████████████████████████████████████ -->
+    <main id="content">
+
+
+      <!-- ══════════════════════════════════════
+           SUPER ADMINISTRADOR — 4 pantallas
+      ══════════════════════════════════════ -->
+
+      <!-- SA: Dashboard -->
+      <section class="screen active" id="sa-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Dashboard</div>
+            <!-- API: fecha actual desde el servidor -->
+            <div class="page-subtitle" id="sa-dashboard-subtitle">Resumen ejecutivo del sistema</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-label">Total usuarios</div>
+            <div class="stat-value" id="stat-sa-total-users">—</div>
+            <div class="stat-desc" id="stat-sa-users-desc">—</div>
+          </div>
+          <div class="stat-card navy">
+            <div class="stat-label">Departamentos</div>
+            <div class="stat-value" id="stat-sa-departments">—</div>
+            <div class="stat-desc" id="stat-sa-depts-desc">—</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">Alertas bienestar</div>
+            <div class="stat-value" id="stat-sa-wellness-alerts">—</div>
+            <div class="stat-desc" id="stat-sa-alerts-desc">—</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Acciones recientes</div>
+            <div class="stat-value" id="stat-sa-actions">—</div>
+            <div class="stat-desc" id="stat-sa-actions-desc">—</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Usuarios por rol</span>
+              <button class="btn btn-outline btn-sm" onclick="showScreen('sa-users', null)">Ver todos</button>
+            </div>
+            <div class="card-body">
+              <table class="data-table">
+                <thead><tr><th>Rol</th><th>Activos</th><th>Inactivos</th><th>Total</th></tr></thead>
+                <tbody id="tbl-sa-users-roles">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Alertas críticas sin leer</span>
+              <span class="badge badge-alto" id="badge-sa-alerts-unread">0 sin leer</span>
+            </div>
+            <div class="card-body" id="list-sa-alerts">
+              <!-- JS/API: alertas renderizadas dinámicamente -->
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Acciones recientes del sistema</span></div>
+            <div class="card-body">
+              <table class="data-table">
+                <thead><tr><th>Acción</th><th>Usuario</th><th>Hora</th></tr></thead>
+                <tbody id="tbl-sa-activity">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Accesos directos</span></div>
+            <div class="card-body" style="display:flex; flex-wrap:wrap; gap:10px;">
+              <button class="btn btn-outline" onclick="showScreen('sa-users',null)">👥 Gestionar usuarios</button>
+              <button class="btn btn-outline" onclick="showScreen('sa-config',null)">⚙️ Configuración CST</button>
+              <button class="btn btn-outline" onclick="showScreen('sa-wellness',null)">💚 Ver encuestas</button>
+              <button class="btn btn-ghost">📊 Log de auditoría</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SA: Usuarios y Roles -->
+      <section class="screen" id="sa-users">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Gestión de Usuarios y Roles</div>
+            <div class="page-subtitle">Administra cuentas, roles y permisos del sistema</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openModal('modal-new-user')">+ Nuevo usuario</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <input class="filter-input" type="text" placeholder="🔍  Buscar por nombre o correo…">
+          <select class="filter-select"><option>Todos los roles</option><option>Super Admin</option><option>Administrador</option><option>Moderador</option><option>Agente</option></select>
+          <select class="filter-select"><option>Todos los estados</option><option>Activo</option><option>Inactivo</option></select>
+          <!-- API: opciones de departamentos desde BD -->
+          <select class="filter-select" id="sa-users-dept-filter"><option>Todos los departamentos</option></select>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Departamento</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr></thead>
+                <tbody id="tbl-sa-users">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SA: Configuración -->
+      <!-- NOTA: Los valores por defecto (8h, 48h, etc.) son constantes legales del CST.
+           En producción se cargan desde BD y se pueden modificar por empresa. -->
+      <section class="screen" id="sa-config">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Configuración General del Sistema</div>
+            <div class="page-subtitle">Parámetros globales — Código Sustantivo del Trabajo y umbrales del Motor GESLAB</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary">Guardar cambios</button>
+          </div>
+        </div>
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">⚖️ Parámetros del CST — Colombia</span></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Jornada máxima diaria (horas)</label>
+                <input class="form-control" type="number" id="config-max-daily-hours" value="8">
+                <span class="form-hint">Art. 161 CST — máximo 8 horas/día</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Jornada máxima semanal (horas)</label>
+                <input class="form-control" type="number" id="config-max-weekly-hours" value="48">
+                <span class="form-hint">Art. 161 CST — máximo 48 horas/semana</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Descanso mínimo entre turnos (horas)</label>
+                <input class="form-control" type="number" id="config-min-rest" value="12">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Horas extra — límite semanal</label>
+                <input class="form-control" type="number" id="config-max-extra-hours" value="12">
+                <span class="form-hint">Horas adicionales permitidas sobre la jornada ordinaria</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">📅 Frecuencia de generación de mallas</span></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Frecuencia por defecto</label>
+                <select class="form-control" id="config-schedule-frequency">
+                  <option>Semanal</option>
+                  <option selected>Quincenal</option>
+                  <option>Mensual</option>
+                  <option>Personalizada</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Día de inicio de período</label>
+                <select class="form-control" id="config-week-start">
+                  <option selected>Lunes</option>
+                  <option>Domingo</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">💚 Umbrales del Motor GESLAB — Bienestar</span></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Umbral alerta Bajo (índice ≥)</label>
+                <input class="form-control" type="number" step="0.1" id="config-threshold-low" value="3.5">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Umbral alerta Medio (índice ≥)</label>
+                <input class="form-control" type="number" step="0.1" id="config-threshold-mid" value="2.5">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Umbral alerta Alto (índice &lt;)</label>
+                <input class="form-control" type="number" step="0.1" id="config-threshold-high" value="2.0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Límite cambios de turno por semana (Agente)</label>
+                <input class="form-control" type="number" id="config-shift-change-limit" value="2">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SA: Bienestar & Encuestas -->
+      <section class="screen" id="sa-wellness">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Bienestar &amp; Encuestas</div>
+            <div class="page-subtitle">Monitoreo global del estado emocional del personal</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openModal('modal-new-survey')">+ Nueva encuesta</button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card green">
+            <div class="stat-label">Índice empresa</div>
+            <div class="stat-value" id="stat-sa-wellness-index">—</div>
+            <div class="stat-desc">Promedio general</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Alertas activas</div>
+            <div class="stat-value" id="stat-sa-active-alerts">—</div>
+            <div class="stat-desc" id="stat-sa-active-alerts-desc">—</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Encuesta activa</div>
+            <div class="stat-value" id="stat-sa-active-surveys">—</div>
+            <div class="stat-desc" id="stat-sa-active-surveys-desc">—</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">Sol. bienestar</div>
+            <div class="stat-value" id="stat-sa-wellness-reqs">—</div>
+            <div class="stat-desc" id="stat-sa-wellness-reqs-desc">—</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Índice por área</span></div>
+            <div class="card-body" id="list-sa-wellness-bars">
+              <!-- JS/API: barras de bienestar por área renderizadas dinámicamente -->
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Alertas críticas del sistema</span></div>
+            <div class="card-body" id="list-sa-wellness-alerts">
+              <!-- JS/API: alertas renderizadas dinámicamente -->
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Encuestas institucionales</span></div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Título</th><th>Estado</th><th>Publicada</th><th>Participación</th><th>Índice promedio</th><th>Acciones</th></tr></thead>
+              <tbody id="tbl-sa-surveys">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ══════════════════════════════════════
+           ADMINISTRADOR — 6 pantallas
+      ══════════════════════════════════════ -->
+
+      <!-- ADM: Dashboard -->
+      <section class="screen" id="adm-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Dashboard</div>
+            <!-- API: fecha y departamento desde sesión -->
+            <div class="page-subtitle" id="adm-dashboard-subtitle">Panel operativo — Gestión Humana</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card amber"><div class="stat-label">Solicitudes pendientes</div><div class="stat-value" id="stat-adm-pending-reqs">—</div><div class="stat-desc" id="stat-adm-pending-reqs-desc">—</div></div>
+          <div class="stat-card blue"><div class="stat-label">Novedades activas</div><div class="stat-value" id="stat-adm-novelties">—</div><div class="stat-desc" id="stat-adm-novelties-desc">—</div></div>
+          <div class="stat-card red"><div class="stat-label">Alertas bienestar</div><div class="stat-value" id="stat-adm-wellness-alerts">—</div><div class="stat-desc" id="stat-adm-wellness-alerts-desc">—</div></div>
+          <div class="stat-card green"><div class="stat-label">Malla vigente</div><div class="stat-value" id="stat-adm-schedule-status">—</div><div class="stat-desc" id="stat-adm-schedule-desc">—</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Solicitudes por tipo (mes)</span></div>
+            <div class="card-body">
+              <table class="data-table">
+                <thead><tr><th>Tipo</th><th>Pendientes</th><th>Aprobadas</th><th>Rechazadas</th></tr></thead>
+                <tbody id="tbl-adm-request-types">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Alertas del Motor GESLAB</span></div>
+            <div class="card-body" id="list-adm-alerts">
+              <!-- JS/API: alertas renderizadas dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADM: Buzón de Novedades -->
+      <section class="screen" id="adm-novelties">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Buzón de Novedades</div>
+            <div class="page-subtitle">Registra y gestiona eventos que afectan la disponibilidad del personal</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openModal('modal-new-novelty')">+ Registrar novedad</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <input class="filter-input" type="text" placeholder="🔍  Buscar colaborador…">
+          <select class="filter-select"><option>Todos los tipos</option><option>Vacaciones</option><option>Permiso</option><option>Incapacidad</option><option>Licencia</option><option>Suspensión</option><option>Retiro</option></select>
+          <select class="filter-select"><option>Todos los estados</option><option>Activa</option><option>Vencida</option></select>
+          <input class="filter-input" type="date" style="min-width:150px">
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Colaborador</th><th>Departamento</th><th>Tipo</th><th>Fecha inicio</th><th>Fecha fin</th><th>Soporte</th><th>Acciones</th></tr></thead>
+              <tbody id="tbl-adm-novelties">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADM: Mallas de Turnos -->
+      <section class="screen" id="adm-schedules">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Gestión de Mallas de Turnos</div>
+            <div class="page-subtitle">Genera, edita y publica la programación del personal</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline" onclick="openModal('modal-gen-schedule')">⚡ Generar con Motor GESLAB</button>
+            <button class="btn btn-primary">+ Crear manual</button>
+          </div>
+        </div>
+        <div class="card mb-16">
+          <div class="card-header">
+            <!-- API: nombre de malla, departamento y período -->
+            <span class="card-title" id="adm-schedule-card-title">Malla — Sin malla seleccionada</span>
+            <div class="d-flex" style="gap:8px">
+              <!-- API: estado de la malla (Borrador / Publicada) -->
+              <span class="badge badge-draft" id="adm-schedule-status-badge">Sin estado</span>
+              <button class="btn btn-success btn-sm">Publicar malla</button>
+              <button class="btn btn-ghost btn-sm">Exportar Excel</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0; overflow-x:auto">
+            <table class="data-table schedule-grid" style="min-width:700px">
+              <thead>
+                <tr id="tbl-adm-schedule-head">
+                  <th style="min-width:130px">Colaborador</th>
+                  <!-- JS/API: columnas de días generadas dinámicamente (Lun, Mar, Mié...) -->
+                </tr>
+              </thead>
+              <tbody id="tbl-adm-schedule">
+                <!-- JS/API: filas de malla (colaborador + celdas de turno) renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+          <!-- JS: visible solo si el Motor detecta conflictos al generar la malla -->
+          <div id="adm-schedule-conflict" style="display:none; padding:12px 20px; background:#fffbf0; border-top:1px solid #fde8a0; font-size:12.5px; color:#7a5c00">
+            <!-- JS: mensaje de conflicto poblado dinámicamente -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ADM: Buzón de Solicitudes -->
+      <section class="screen" id="adm-requests">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Buzón de Solicitudes</div>
+            <div class="page-subtitle">Decisión final sobre solicitudes laborales del personal</div>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <input class="filter-input" type="text" placeholder="🔍  Buscar por agente o ID…">
+          <select class="filter-select"><option>Todos los tipos</option><option>Cambio de Turno</option><option>Permiso</option><option>Vacaciones</option><option>Incapacidad</option><option>PQRSF</option><option>Retiro</option><option>Bienestar</option></select>
+          <select class="filter-select"><option>Todos los estados</option><option>Pendiente</option><option>En revisión</option><option>Aprobada</option><option>Rechazada</option></select>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Agente</th><th>Tipo</th><th>Fecha envío</th><th>Moderador</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="tbl-adm-requests">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADM: Bienestar -->
+      <section class="screen" id="adm-wellness">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Bienestar Institucional</div>
+            <div class="page-subtitle">Monitoreo del estado emocional del personal y gestión de encuestas</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openModal('modal-new-survey')">+ Nueva encuesta</button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card green"><div class="stat-label">Índice empresa</div><div class="stat-value" id="stat-adm-wellness-index">—</div><div class="stat-desc">Promedio general</div></div>
+          <div class="stat-card red"><div class="stat-label">Alertas activas</div><div class="stat-value" id="stat-adm-active-alerts">—</div><div class="stat-desc" id="stat-adm-active-alerts-desc">—</div></div>
+          <div class="stat-card blue"><div class="stat-label">Encuesta activa</div><div class="stat-value" id="stat-adm-active-survey">—</div><div class="stat-desc" id="stat-adm-active-survey-desc">—</div></div>
+          <div class="stat-card amber"><div class="stat-label">Sol. bienestar</div><div class="stat-value" id="stat-adm-wellness-reqs">—</div><div class="stat-desc" id="stat-adm-wellness-reqs-desc">—</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Índice por área</span></div>
+            <div class="card-body" id="list-adm-wellness-bars">
+              <!-- JS/API: barras por área renderizadas dinámicamente -->
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Alertas recientes</span></div>
+            <div class="card-body" id="list-adm-wellness-alerts">
+              <!-- JS/API: alertas renderizadas dinámicamente -->
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Encuestas</span></div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Título</th><th>Estado</th><th>Publicada</th><th>Participación</th><th>Índice</th><th>Acciones</th></tr></thead>
+              <tbody id="tbl-adm-surveys">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADM: Reportes -->
+      <section class="screen" id="adm-reports">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Reportes</div>
+            <div class="page-subtitle">Indicadores de gestión por período, área y colaborador</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline">⬇ Exportar Excel</button>
+          </div>
+        </div>
+        <div class="vtab-nav">
+          <button class="vtab-btn active" onclick="switchVtab('rep','rep-schedules',this)">Turnos y mallas</button>
+          <button class="vtab-btn" onclick="switchVtab('rep','rep-requests',this)">Solicitudes</button>
+          <button class="vtab-btn" onclick="switchVtab('rep','rep-wellness',this)">Bienestar</button>
+          <button class="vtab-btn" onclick="switchVtab('rep','rep-audit',this)">Auditoría</button>
+        </div>
+        <div class="filters-bar">
+          <!-- API: opciones de departamentos dinámicas -->
+          <select class="filter-select" id="rep-dept-filter"><option>Todos los departamentos</option></select>
+          <input class="filter-input" type="date" style="min-width:150px" id="rep-date-from">
+          <input class="filter-input" type="date" style="min-width:150px" id="rep-date-to">
+          <button class="btn btn-primary btn-sm">Aplicar filtros</button>
+        </div>
+
+        <!-- Panel: Turnos y mallas -->
+        <div class="vtab-panel active" id="rep-schedules">
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card blue"><div class="stat-label">Horas ordinarias</div><div class="stat-value" id="stat-rep-ordinary-hours">—</div><div class="stat-desc">Total equipo</div></div>
+            <div class="stat-card amber"><div class="stat-label">Horas extra</div><div class="stat-value" id="stat-rep-extra-hours">—</div><div class="stat-desc" id="stat-rep-extra-hours-desc">—</div></div>
+            <div class="stat-card red"><div class="stat-label">Días con novedad</div><div class="stat-value" id="stat-rep-novelty-days">—</div><div class="stat-desc">Período</div></div>
+          </div>
+          <div class="card">
+            <div class="card-body" style="padding:0">
+              <table class="data-table">
+                <thead><tr><th>Colaborador</th><th>Área</th><th>H. ordinarias</th><th>H. extra</th><th>Días novedad</th><th>Turnos cubiertos</th></tr></thead>
+                <tbody id="tbl-rep-schedules">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Solicitudes -->
+        <div class="vtab-panel" id="rep-requests">
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card blue"><div class="stat-label">Total solicitudes</div><div class="stat-value" id="stat-rep-total-reqs">—</div><div class="stat-desc">En el período</div></div>
+            <div class="stat-card green"><div class="stat-label">Aprobadas</div><div class="stat-value" id="stat-rep-approved-reqs">—</div><div class="stat-desc" id="stat-rep-approved-pct">—</div></div>
+            <div class="stat-card red"><div class="stat-label">Rechazadas</div><div class="stat-value" id="stat-rep-rejected-reqs">—</div><div class="stat-desc" id="stat-rep-rejected-pct">—</div></div>
+          </div>
+          <div class="card">
+            <div class="card-body" style="padding:0">
+              <table class="data-table">
+                <thead><tr><th>Tipo</th><th>Total</th><th>Aprobadas</th><th>Rechazadas</th><th>Pendientes</th></tr></thead>
+                <tbody id="tbl-rep-requests">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Bienestar -->
+        <div class="vtab-panel" id="rep-wellness">
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card green"><div class="stat-label">Índice promedio</div><div class="stat-value" id="stat-rep-wellness-index">—</div><div class="stat-desc">De 5.0</div></div>
+            <div class="stat-card blue"><div class="stat-label">Encuestas realizadas</div><div class="stat-value" id="stat-rep-surveys-count">—</div><div class="stat-desc">En el período</div></div>
+            <div class="stat-card amber"><div class="stat-label">Alertas generadas</div><div class="stat-value" id="stat-rep-alerts-count">—</div><div class="stat-desc">Motor GESLAB</div></div>
+          </div>
+          <div class="card">
+            <div class="card-body" style="padding:0">
+              <table class="data-table">
+                <thead><tr><th>Encuesta</th><th>Período</th><th>Participación</th><th>Índice</th><th>Alertas</th></tr></thead>
+                <tbody id="tbl-rep-wellness">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Auditoría -->
+        <div class="vtab-panel" id="rep-audit">
+          <div class="card">
+            <div class="card-body" style="padding:0">
+              <table class="data-table">
+                <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Módulo</th><th>Detalle</th></tr></thead>
+                <tbody id="tbl-rep-audit">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ══════════════════════════════════════
+           MODERADOR — 5 pantallas
+      ══════════════════════════════════════ -->
+
+      <!-- MOD: Dashboard -->
+      <section class="screen" id="mod-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Dashboard</div>
+            <!-- API: departamento y fecha desde sesión -->
+            <div class="page-subtitle" id="mod-dashboard-subtitle">Panel de supervisión</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card blue"><div class="stat-label">Colaboradores activos</div><div class="stat-value" id="stat-mod-active-colabs">—</div><div class="stat-desc" id="stat-mod-active-colabs-desc">—</div></div>
+          <div class="stat-card amber"><div class="stat-label">Solicitudes por revisar</div><div class="stat-value" id="stat-mod-pending-reqs">—</div><div class="stat-desc">Requieren pre-validación</div></div>
+          <div class="stat-card red"><div class="stat-label">Alerta bienestar</div><div class="stat-value" id="stat-mod-wellness-alert">—</div><div class="stat-desc" id="stat-mod-wellness-alert-desc">—</div></div>
+          <div class="stat-card green"><div class="stat-label">Malla vigente</div><div class="stat-value" id="stat-mod-schedule">—</div><div class="stat-desc" id="stat-mod-schedule-desc">—</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Estado del equipo hoy</span></div>
+            <div class="card-body">
+              <table class="data-table">
+                <thead><tr><th>Colaborador</th><th>Turno hoy</th><th>Estado</th></tr></thead>
+                <tbody id="tbl-mod-team-status">
+                  <!-- JS/API: filas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Solicitudes pendientes</span>
+              <button class="btn btn-ghost btn-sm" onclick="showScreen('mod-requests',null)">Ver todas</button>
+            </div>
+            <div class="card-body" id="list-mod-pending-requests">
+              <!-- JS/API: solicitudes pendientes renderizadas dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOD: Malla del Equipo -->
+      <section class="screen" id="mod-schedule">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Malla del Equipo</div>
+            <!-- API: departamento desde sesión -->
+            <div class="page-subtitle" id="mod-schedule-subtitle">Visualización de turnos — Solo lectura</div>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <select class="filter-select" id="mod-schedule-period-filter">
+            <option>Seleccionar período…</option>
+            <!-- JS/API: opciones de períodos disponibles renderizadas dinámicamente -->
+          </select>
+        </div>
+        <div class="card">
+          <!-- API: título con departamento y período seleccionado -->
+          <div class="card-header"><span class="card-title" id="mod-schedule-card-title">Malla del equipo</span></div>
+          <div class="card-body" style="padding:0; overflow-x:auto">
+            <table class="data-table schedule-grid" style="min-width:700px">
+              <thead>
+                <tr id="tbl-mod-schedule-head">
+                  <th style="min-width:130px">Colaborador</th>
+                  <!-- JS/API: columnas de días generadas dinámicamente -->
+                </tr>
+              </thead>
+              <tbody id="tbl-mod-schedule">
+                <!-- JS/API: filas de malla renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOD: Solicitudes del equipo -->
+      <section class="screen" id="mod-requests">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Solicitudes del Equipo</div>
+            <!-- API: departamento desde sesión -->
+            <div class="page-subtitle" id="mod-requests-subtitle">Pre-validación antes de enviar al Administrador</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Agente</th><th>Tipo</th><th>Fecha envío</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="tbl-mod-requests">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOD: Novedades del equipo -->
+      <section class="screen" id="mod-novelties">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Novedades del Equipo</div>
+            <!-- API: departamento desde sesión -->
+            <div class="page-subtitle" id="mod-novelties-subtitle">Consulta de novedades activas — Solo lectura</div>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <select class="filter-select"><option>Todos los tipos</option><option>Vacaciones</option><option>Permiso</option><option>Incapacidad</option><option>Licencia</option></select>
+          <select class="filter-select" id="mod-novelties-colab-filter">
+            <option>Todos los colaboradores</option>
+            <!-- JS/API: colaboradores del equipo renderizados dinámicamente -->
+          </select>
+        </div>
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">Novedades activas</span></div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Colaborador</th><th>Tipo</th><th>Desde</th><th>Hasta</th><th>Observación</th></tr></thead>
+              <tbody id="tbl-mod-novelties-active">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Historial de novedades</span></div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Colaborador</th><th>Tipo</th><th>Desde</th><th>Hasta</th></tr></thead>
+              <tbody id="tbl-mod-novelties-history">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOD: Bienestar del equipo -->
+      <section class="screen" id="mod-wellness">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Bienestar del Equipo</div>
+            <!-- API: departamento desde sesión -->
+            <div class="page-subtitle" id="mod-wellness-subtitle">Indicadores emocionales y solicitudes</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card red"><div class="stat-label">Índice del equipo</div><div class="stat-value" id="stat-mod-wellness-index">—</div><div class="stat-desc" id="stat-mod-wellness-index-desc">—</div></div>
+          <div class="stat-card amber"><div class="stat-label">Alertas activas</div><div class="stat-value" id="stat-mod-active-alerts">—</div><div class="stat-desc" id="stat-mod-active-alerts-desc">—</div></div>
+          <div class="stat-card blue"><div class="stat-label">Participación última encuesta</div><div class="stat-value" id="stat-mod-participation">—</div><div class="stat-desc" id="stat-mod-participation-pct">—</div></div>
+          <div class="stat-card amber"><div class="stat-label">Sol. bienestar pendientes</div><div class="stat-value" id="stat-mod-wellness-reqs">—</div><div class="stat-desc">En revisión</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <!-- API: título con período de la encuesta -->
+            <div class="card-header"><span class="card-title" id="mod-wellness-dist-title">Distribución de respuestas</span></div>
+            <div class="card-body" id="list-mod-wellness-bars">
+              <!-- JS/API: barras de distribución renderizadas dinámicamente.
+                   Etiquetas estáticas del dominio (siempre las mismas):
+                   😢 Muy mal (1) · 😟 Mal (2) · 😐 Neutral (3) · 🙂 Bien (4) · 😄 Muy bien (5) -->
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Alertas del equipo</span></div>
+            <div class="card-body" id="list-mod-wellness-alerts">
+              <!-- JS/API: alertas renderizadas dinámicamente -->
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Solicitudes de bienestar del equipo</span></div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Agente</th><th>Descripción</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="tbl-mod-wellness-requests">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ══════════════════════════════════════
+           AGENTE — 4 pantallas
+      ══════════════════════════════════════ -->
+
+      <!-- AGE: Dashboard -->
+      <section class="screen" id="age-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Mi Panel</div>
+            <!-- API: nombre del agente desde sesión -->
+            <div class="page-subtitle">Bienvenida/o, <span id="age-welcome-name">—</span></div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card blue"><div class="stat-label">Próximo turno</div><div class="stat-value" id="stat-age-next-shift">—</div><div class="stat-desc" id="stat-age-next-shift-desc">—</div></div>
+          <div class="stat-card amber"><div class="stat-label">Mis solicitudes activas</div><div class="stat-value" id="stat-age-active-reqs">—</div><div class="stat-desc" id="stat-age-active-reqs-desc">—</div></div>
+          <div class="stat-card green"><div class="stat-label">Mi bienestar</div><div class="stat-value" id="stat-age-wellness">—</div><div class="stat-desc" id="stat-age-wellness-desc">—</div></div>
+          <div class="stat-card red"><div class="stat-label">Encuestas pendientes</div><div class="stat-value" id="stat-age-pending-surveys">—</div><div class="stat-desc" id="stat-age-pending-surveys-desc">—</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Mis próximos turnos</span>
+              <button class="btn btn-ghost btn-sm" onclick="showScreen('age-shifts',null)">Ver todos</button>
+            </div>
+            <div class="card-body" id="list-age-upcoming-shifts">
+              <!-- JS/API: tarjetas de turno renderizadas dinámicamente -->
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Notificaciones</span></div>
+            <div class="card-body" id="list-age-notifications">
+              <!-- JS/API: notificaciones renderizadas dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AGE: Mis Turnos -->
+      <section class="screen" id="age-shifts">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Mis Turnos</div>
+            <div class="page-subtitle">Calendario de turnos asignados (Solo lectura)</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openModal('modal-req-shift')">↔ Solicitar cambio de turno</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <select class="filter-select" id="age-shifts-period-filter">
+            <option>Seleccionar período…</option>
+            <!-- JS/API: períodos disponibles renderizados dinámicamente -->
+          </select>
+        </div>
+        <div class="card mb-16">
+          <!-- API: título con período seleccionado -->
+          <div class="card-header"><span class="card-title" id="age-shifts-card-title">Mis turnos</span></div>
+          <div class="card-body" id="age-shifts-week-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:10px">
+            <!-- JS/API: grilla semanal de turnos renderizada dinámicamente (7 días) -->
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Historial de turnos</span></div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Fecha</th><th>Hora inicio</th><th>Hora fin</th><th>Área</th><th>Moderador</th></tr></thead>
+              <tbody id="tbl-age-shifts-history">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AGE: Mis Solicitudes -->
+      <section class="screen" id="age-requests">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Mis Solicitudes</div>
+            <div class="page-subtitle">Sigue y gestiona todas tus peticiones laborales</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openModal('modal-new-request')">+ Nueva solicitud</button>
+          </div>
+        </div>
+        <div style="padding:10px 16px; background:#EBF5FB; border-radius:8px; border:1.5px solid #aad4e8; font-size:13px; color:#1A6B9A; margin-bottom:16px">
+          <!-- API: límite y uso actual desde sesión del agente -->
+          ℹ️ Límite semanal cambios de turno: <strong id="age-shift-limit">—</strong>
+        </div>
+        <div class="filters-bar">
+          <select class="filter-select"><option>Todos los tipos</option><option>Cambio de Turno</option><option>Permiso</option><option>Vacaciones</option><option>Incapacidad</option><option>PQRSF</option><option>Retiro</option><option>Bienestar</option></select>
+          <select class="filter-select"><option>Todos los estados</option><option>Pendiente</option><option>En revisión</option><option>Aprobada</option><option>Rechazada</option></select>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Tipo</th><th>Descripción</th><th>Fecha envío</th><th>Estado</th><th>Comentario</th></tr></thead>
+              <tbody id="tbl-age-requests">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AGE: Mi Bienestar -->
+      <section class="screen" id="age-wellness">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Mi Bienestar</div>
+            <div class="page-subtitle">Encuestas disponibles e historial de bienestar personal</div>
+          </div>
+        </div>
+
+        <!-- Encuesta activa — visible solo si el agente tiene encuesta pendiente (JS la muestra) -->
+        <div class="card mb-16" id="age-active-survey-card" style="border-color:var(--accent); border-width:2px; display:none">
+          <div class="card-header" style="background:var(--light)">
+            <!-- API: título de la encuesta activa -->
+            <span class="card-title" id="age-active-survey-title">📊 Encuesta pendiente</span>
+            <span class="badge badge-pend">Sin responder</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13.5px; color:var(--text); margin-bottom:16px">¿Cómo te has sentido esta semana en el trabajo? Tu respuesta es confidencial y se analiza de forma agregada.</p>
+            <div class="form-group mb-16">
+              <label class="form-label">¿Cómo calificarías tu bienestar esta semana?</label>
+              <!-- Escala de bienestar: etiquetas estáticas del dominio de la aplicación -->
+              <div class="emotion-scale">
+                <button class="em-btn"><span class="em-emoji">😢</span>Muy mal<br><span style="font-size:10px">(1)</span></button>
+                <button class="em-btn"><span class="em-emoji">😟</span>Mal<br><span style="font-size:10px">(2)</span></button>
+                <button class="em-btn"><span class="em-emoji">😐</span>Neutral<br><span style="font-size:10px">(3)</span></button>
+                <button class="em-btn"><span class="em-emoji">🙂</span>Bien<br><span style="font-size:10px">(4)</span></button>
+                <button class="em-btn"><span class="em-emoji">😄</span>Muy bien<br><span style="font-size:10px">(5)</span></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Comentario adicional (opcional)</label>
+              <textarea class="form-control" placeholder="Si deseas agregar algo…"></textarea>
+            </div>
+            <div class="form-actions" style="border-top:none; margin-top:12px; padding-top:0">
+              <button class="btn btn-primary">Enviar respuesta</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">Mi historial de bienestar</span></div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Encuesta</th><th>Fecha</th><th>Mi respuesta</th><th>Comentario</th></tr></thead>
+              <tbody id="tbl-age-wellness-history">
+                <!-- JS/API: filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Solicitud de bienestar institucional</span>
+            <button class="btn btn-outline btn-sm" onclick="openModal('modal-new-request')">+ Crear solicitud</button>
+          </div>
+          <div class="card-body">
+            <p class="text-sub">Si tienes una necesidad emocional o laboral que quieras comunicar formalmente al equipo de Gestión Humana, puedes crear una solicitud de bienestar. Es confidencial y no aparece en tu historial de solicitudes de operación.</p>
+          </div>
+        </div>
+      </section>
+
+
+    </main><!-- /content -->
+  </div><!-- /body-layout -->
+</div><!-- /app-shell -->
+
+
+<!-- ████████████████████████████████████████████
+     MODALES
+     Todos los modales viven fuera del app-shell.
+     Se activan con la clase .open via JS.
+████████████████████████████████████████████ -->
+
+<!-- Modal: Notificaciones -->
+<div class="modal-overlay" id="modal-notif" onclick="closeModal('modal-notif')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">🔔 Notificaciones</span>
+      <button class="modal-close" onclick="closeModal('modal-notif')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="list-modal-notifs">
+        <!-- JS/API: notificaciones del usuario renderizadas dinámicamente -->
+      </div>
+      <div style="margin-top:16px; text-align:right">
+        <button class="btn btn-ghost btn-sm">Marcar todas como leídas</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nuevo usuario (SA) -->
+<div class="modal-overlay" id="modal-new-user" onclick="closeModal('modal-new-user')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">Crear nuevo usuario</span>
+      <button class="modal-close" onclick="closeModal('modal-new-user')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Nombre completo *</label><input class="form-control" type="text" placeholder="Ej. Juan García"></div>
+        <div class="form-group"><label class="form-label">Correo corporativo *</label><input class="form-control" type="email" placeholder="usuario@empresa.co"></div>
+        <div class="form-group"><label class="form-label">Rol *</label>
+          <select class="form-control">
+            <option>Seleccionar…</option>
+            <option>Administrador</option>
+            <option>Moderador</option>
+            <option>Agente</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Departamento *</label>
+          <select class="form-control" id="new-user-dept">
+            <option>Seleccionar…</option>
+            <!-- JS/API: departamentos desde BD -->
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-new-user')">Cancelar</button>
+        <button class="btn btn-primary">Crear usuario</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Registrar novedad (ADM) -->
+<div class="modal-overlay" id="modal-new-novelty" onclick="closeModal('modal-new-novelty')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">Registrar novedad</span>
+      <button class="modal-close" onclick="closeModal('modal-new-novelty')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Colaborador *</label>
+          <select class="form-control" id="novelty-colab-select">
+            <option>Seleccionar…</option>
+            <!-- JS/API: colaboradores desde BD -->
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Tipo de novedad *</label>
+          <select class="form-control">
+            <option>Seleccionar…</option>
+            <option>Vacaciones</option><option>Permiso</option><option>Incapacidad</option>
+            <option>Licencia</option><option>Suspensión</option><option>Retiro</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Fecha inicio *</label><input class="form-control" type="date"></div>
+        <div class="form-group"><label class="form-label">Fecha fin *</label><input class="form-control" type="date"></div>
+        <div class="form-group full"><label class="form-label">Descripción</label><textarea class="form-control" placeholder="Motivo o detalle adicional…"></textarea></div>
+        <div class="form-group full">
+          <label class="form-label">Soporte documental</label>
+          <input class="form-control" type="file">
+          <span class="form-hint">Obligatorio para Incapacidades. PDF o imagen, máx. 5 MB.</span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-new-novelty')">Cancelar</button>
+        <button class="btn btn-primary">Guardar novedad</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Generar malla con Motor GESLAB (ADM) -->
+<div class="modal-overlay" id="modal-gen-schedule" onclick="closeModal('modal-gen-schedule')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">⚡ Generar malla con Motor GESLAB</span>
+      <button class="modal-close" onclick="closeModal('modal-gen-schedule')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--light); border-radius:8px; padding:14px 16px; margin-bottom:18px; font-size:13px; color:var(--accent); border:1.5px solid #b3d7ea">
+        El Motor GESLAB procesará novedades vigentes, disponibilidad del personal y reglas del CST para generar la propuesta óptima de malla.
+      </div>
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Departamento *</label>
+          <select class="form-control" id="gen-schedule-dept">
+            <option>Seleccionar…</option>
+            <!-- JS/API: departamentos desde BD -->
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Fecha inicio *</label><input class="form-control" type="date"></div>
+        <div class="form-group"><label class="form-label">Fecha fin *</label><input class="form-control" type="date"></div>
+        <div class="form-group full"><label class="form-label">Frecuencia</label>
+          <select class="form-control">
+            <option>Semanal</option>
+            <option selected>Quincenal</option>
+            <option>Mensual</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-gen-schedule')">Cancelar</button>
+        <button class="btn btn-primary">⚡ Generar malla</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nueva encuesta de bienestar (SA/ADM) -->
+<div class="modal-overlay" id="modal-new-survey" onclick="closeModal('modal-new-survey')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">Crear encuesta de bienestar</span>
+      <button class="modal-close" onclick="closeModal('modal-new-survey')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Título *</label><input class="form-control" type="text" placeholder="Ej. Encuesta bienestar semana 11"></div>
+        <div class="form-group full"><label class="form-label">Descripción</label><textarea class="form-control" placeholder="Breve descripción del objetivo de la encuesta…"></textarea></div>
+        <div class="form-group full"><label class="form-label">Dirigida a</label>
+          <select class="form-control" id="survey-target">
+            <option>Todos los agentes</option>
+            <!-- JS/API: departamentos disponibles -->
+          </select>
+        </div>
+      </div>
+      <div style="background:#fffbf0; border-radius:8px; padding:12px 14px; margin:12px 0; font-size:12.5px; color:#7a5c00; border:1px solid #fde8a0">
+        ⚠️ Una encuesta publicada no puede editarse ni eliminarse (RN-009). Solo puede cerrarse.
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-new-survey')">Cancelar</button>
+        <button class="btn btn-ghost">Guardar borrador</button>
+        <button class="btn btn-primary">Publicar encuesta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Procesar solicitud (MOD) -->
+<div class="modal-overlay" id="modal-process-req" onclick="closeModal('modal-process-req')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <!-- API: ID de la solicitud poblado al abrir el modal -->
+      <span class="modal-title" id="modal-process-req-title">Procesar solicitud</span>
+      <button class="modal-close" onclick="closeModal('modal-process-req')">×</button>
+    </div>
+    <div class="modal-body">
+      <table class="data-table" style="margin-bottom:16px">
+        <tbody id="tbl-modal-process-req">
+          <!-- JS/API: filas con detalle de la solicitud (Agente, Tipo, Descripción, Fecha, Soporte) -->
+        </tbody>
+      </table>
+      <div class="form-group">
+        <label class="form-label">Comentario (opcional para envío al Admin)</label>
+        <textarea class="form-control" placeholder="Agregar observación para el Administrador…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-process-req')">Cancelar</button>
+        <button class="btn btn-danger">Rechazar</button>
+        <button class="btn btn-primary">Enviar al Administrador →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nueva solicitud (AGE) -->
+<div class="modal-overlay" id="modal-new-request" onclick="closeModal('modal-new-request')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">Nueva solicitud</span>
+      <button class="modal-close" onclick="closeModal('modal-new-request')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#EBF5FB; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:12.5px; color:#1A6B9A; border:1px solid #aad4e8">
+        <!-- API: límite y uso actual del agente -->
+        ℹ️ Límite cambios de turno: <strong id="modal-shift-limit-indicator">—</strong>
+      </div>
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Tipo de solicitud *</label>
+          <select class="form-control">
+            <option>Seleccionar…</option>
+            <option>Cambio de Turno</option><option>Permiso</option><option>Vacaciones</option>
+            <option>Incapacidad</option><option>PQRSF</option><option>Bienestar</option><option>Retiro</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Fecha objetivo</label><input class="form-control" type="date"></div>
+        <div class="form-group"></div>
+        <div class="form-group full"><label class="form-label">Descripción *</label><textarea class="form-control" placeholder="Explica el motivo de tu solicitud…"></textarea></div>
+        <div class="form-group full">
+          <label class="form-label">Soporte documental</label>
+          <input class="form-control" type="file">
+          <span class="form-hint">Obligatorio para Vacaciones, Incapacidad y Retiro.</span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-new-request')">Cancelar</button>
+        <button class="btn btn-primary">Enviar solicitud</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Solicitar cambio de turno (AGE) -->
+<div class="modal-overlay" id="modal-req-shift" onclick="closeModal('modal-req-shift')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">Solicitar cambio de turno</span>
+      <button class="modal-close" onclick="closeModal('modal-req-shift')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#EBF5FB; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:12.5px; color:#1A6B9A; border:1px solid #aad4e8">
+        Solo puedes solicitar cambios con colaboradores de tu mismo departamento (RN-005). Límite: 2 por semana.
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Mi turno (a ceder) *</label>
+          <select class="form-control" id="req-shift-my-turn">
+            <option>Seleccionar…</option>
+            <!-- JS/API: turnos propios próximos del agente -->
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Colaborador con quien cambiar *</label>
+          <select class="form-control" id="req-shift-colab">
+            <option>Seleccionar…</option>
+            <!-- JS/API: colaboradores del mismo departamento -->
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Motivo *</label><textarea class="form-control" placeholder="Explica brevemente el motivo del cambio…"></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-req-shift')">Cancelar</button>
+        <button class="btn btn-primary">Enviar solicitud</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ████████████████████████████████████████████
+     JAVASCRIPT
+     Lógica de navegación y control de la UI.
+     Responsable: Daniel → assets/js/main.js
+████████████████████████████████████████████ -->
+<!-- ✅ CORRECCIÓN: ruta relativa (era ruta absoluta Windows → roto en otros equipos) -->
+<script src="main.js"></script>
+
+</body>
+</html>
