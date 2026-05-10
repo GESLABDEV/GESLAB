@@ -1,0 +1,328 @@
+// ============================================================
+// schema.prisma — GESLAB v5.2
+// Generado por BMO · Basado en ERD v2.1
+// Prisma v5 · PostgreSQL 16
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMs ──────────────────────────────────────────────────
+
+enum Rol {
+  SA
+  ADM
+  MOD
+  AGE
+}
+
+enum EstadoMalla {
+  Borrador
+  Propuesta
+  Ajustando
+  Publicada
+  Rechazada
+}
+
+enum FrecuenciaMalla {
+  Semanal
+  Quincenal
+  Mensual
+}
+
+enum EstadoTurno {
+  Programado
+  EnCurso
+  Completado
+  Cancelado
+}
+
+enum TipoNovedad {
+  Vacaciones
+  Incapacidad
+  PermisoRemunerado
+  PermisoNoRemunerado
+  Ausencia
+}
+
+enum EstadoNovedad {
+  Registrada
+  Activa
+  Vencida
+  Eliminada
+}
+
+enum TipoSolicitud {
+  CambioDeTurno
+  Vacaciones
+  PermisoEspecial
+  Otro
+}
+
+enum EstadoSolicitud {
+  Pendiente
+  EnRevision
+  Aprobada
+  Rechazada
+}
+
+enum EstadoEncuesta {
+  Borrador
+  Publicada
+  Cerrada
+}
+
+enum TipoNotificacion {
+  CambioEstadoSolicitud
+  MallaPublicada
+  EncuestaPublicada
+  AlertaCritica
+  CuentaDesactivada
+  CuentaReactivada
+}
+
+enum TipoAlerta {
+  BienestarCritico
+  BienestarMedio
+  BienestarBajo
+  ViolacionCST
+}
+
+enum NivelAlerta {
+  Alto
+  Medio
+  Bajo
+}
+
+// ─── MODELOS ─────────────────────────────────────────────────
+
+model Departamento {
+  id_departamento Int    @id @default(autoincrement())
+  nombre          String @db.VarChar(100)
+
+  usuarios      Usuario[]
+  mallas        Malla[]
+  turnos        Turno[]
+  configuracion ConfiguracionST?
+
+  @@map("departamentos")
+}
+
+model Usuario {
+  id_usuario      Int      @id @default(autoincrement())
+  nombre          String   @db.VarChar(150)
+  email           String   @unique @db.VarChar(255)
+  contrasena_hash String   @db.VarChar(255)
+  rol             Rol
+  disponible      Boolean  @default(true)
+  activo          Boolean  @default(true)
+  creado_en       DateTime @default(now())
+  actualizado_en  DateTime @updatedAt
+
+  id_departamento Int?
+  departamento    Departamento? @relation(fields: [id_departamento], references: [id_departamento])
+
+  id_moderador Int?
+  moderador    Usuario?  @relation("ModeradorSupervisor", fields: [id_moderador], references: [id_usuario])
+  supervisados Usuario[] @relation("ModeradorSupervisor")
+
+  mallas_creadas   Malla[] @relation("MallaCreador")
+  mallas_aprobadas Malla[] @relation("MallaAprobador")
+
+  turnos Turno[]
+
+  novedades_afectado    Novedad[] @relation("NovedadAfectado")
+  novedades_registrador Novedad[] @relation("NovedadRegistrador")
+
+  solicitudes_solicitante Solicitud[] @relation("SolicitudSolicitante")
+  solicitudes_moderador   Solicitud[] @relation("SolicitudModerador")
+  solicitudes_aprobador   Solicitud[] @relation("SolicitudAprobador")
+
+  encuestas_creadas Encuesta[]
+  respuestas        RespuestaEncuesta[]
+
+  notificaciones Notificacion[]
+  alertas        Alerta[]
+  logs           LogAuditoria[]
+
+  @@map("usuarios")
+}
+
+model Malla {
+  id_malla          Int             @id @default(autoincrement())
+  periodo_inicio    DateTime        @db.Date
+  periodo_fin       DateTime        @db.Date
+  frecuencia        FrecuenciaMalla
+  estado            EstadoMalla     @default(Borrador)
+  fecha_publicacion DateTime?
+
+  id_departamento Int
+  departamento    Departamento @relation(fields: [id_departamento], references: [id_departamento])
+
+  id_creador Int
+  creador    Usuario @relation("MallaCreador", fields: [id_creador], references: [id_usuario])
+
+  id_aprobador Int?
+  aprobador    Usuario? @relation("MallaAprobador", fields: [id_aprobador], references: [id_usuario])
+
+  turnos Turno[]
+
+  @@map("mallas")
+}
+
+model Turno {
+  id_turno    Int         @id @default(autoincrement())
+  fecha       DateTime    @db.Date
+  hora_inicio DateTime    @db.Time()
+  hora_fin    DateTime    @db.Time()
+  estado      EstadoTurno @default(Programado)
+
+  id_malla Int
+  malla    Malla @relation(fields: [id_malla], references: [id_malla])
+
+  id_usuario Int
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario])
+
+  id_departamento Int
+  departamento    Departamento @relation(fields: [id_departamento], references: [id_departamento])
+
+  @@map("turnos")
+}
+
+model Novedad {
+  id_novedad   Int           @id @default(autoincrement())
+  tipo         TipoNovedad
+  estado       EstadoNovedad @default(Registrada)
+  fecha_inicio DateTime      @db.Date
+  fecha_fin    DateTime      @db.Date
+  descripcion  String        @db.Text
+  soporte_url  String?       @db.VarChar(500)
+  creado_en    DateTime      @default(now())
+
+  id_usuario Int
+  afectado   Usuario @relation("NovedadAfectado", fields: [id_usuario], references: [id_usuario])
+
+  id_registrado_por Int
+  registrado_por    Usuario @relation("NovedadRegistrador", fields: [id_registrado_por], references: [id_usuario])
+
+  @@map("novedades")
+}
+
+model Solicitud {
+  id_solicitud         Int             @id @default(autoincrement())
+  tipo                 TipoSolicitud
+  descripcion          String          @db.Text
+  fecha_solicitud      DateTime        @default(now())
+  estado               EstadoSolicitud @default(Pendiente)
+  comentario_rechazo   String?         @db.VarChar(1000)
+  comentario_moderador String?         @db.VarChar(1000)
+  soporte_url          String?         @db.VarChar(500)
+
+  id_solicitante Int
+  solicitante    Usuario @relation("SolicitudSolicitante", fields: [id_solicitante], references: [id_usuario])
+
+  id_revisor_moderador Int?
+  revisor_moderador    Usuario? @relation("SolicitudModerador", fields: [id_revisor_moderador], references: [id_usuario])
+
+  id_aprobador Int?
+  aprobador    Usuario? @relation("SolicitudAprobador", fields: [id_aprobador], references: [id_usuario])
+
+  @@map("solicitudes")
+}
+
+model Encuesta {
+  id_encuesta       Int            @id @default(autoincrement())
+  titulo            String         @db.VarChar(200)
+  descripcion       String         @db.Text
+  estado            EstadoEncuesta @default(Borrador)
+  target_roles      String         @db.VarChar(50)
+  questions         Json
+  fecha_publicacion DateTime?
+  creado_en         DateTime       @default(now())
+
+  id_creador Int
+  creador    Usuario @relation(fields: [id_creador], references: [id_usuario])
+
+  respuestas RespuestaEncuesta[]
+
+  @@map("encuestas")
+}
+
+model RespuestaEncuesta {
+  id_respuesta    Int      @id @default(autoincrement())
+  valor_emocional Int
+  comentario      String?  @db.Text
+  fecha_respuesta DateTime @default(now())
+
+  id_encuesta Int
+  encuesta    Encuesta @relation(fields: [id_encuesta], references: [id_encuesta])
+
+  id_usuario Int
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@unique([id_encuesta, id_usuario])
+  @@map("respuestas_encuesta")
+}
+
+model Notificacion {
+  id_notificacion Int              @id @default(autoincrement())
+  tipo            TipoNotificacion
+  mensaje         String           @db.Text
+  leida           Boolean          @default(false)
+  fecha_creacion  DateTime         @default(now())
+  referencia_tipo String?          @db.VarChar(50)
+  referencia_id   Int?
+
+  id_usuario Int
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@map("notificaciones")
+}
+
+model Alerta {
+  id_alerta        Int         @id @default(autoincrement())
+  tipo             TipoAlerta
+  nivel            NivelAlerta
+  descripcion      String      @db.Text
+  leida            Boolean     @default(false)
+  fecha_generacion DateTime    @default(now())
+
+  id_usuario Int
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@map("alertas")
+}
+
+model LogAuditoria {
+  id_log          Int      @id @default(autoincrement())
+  modulo          String   @db.VarChar(100)
+  accion          String   @db.VarChar(100)
+  descripcion     String   @db.Text
+  referencia_tipo String?  @db.VarChar(50)
+  referencia_id   Int?
+  fecha           DateTime @default(now())
+
+  id_usuario Int
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@map("logs_auditoria")
+}
+
+model ConfiguracionST {
+  id_config           Int      @id @default(autoincrement())
+  max_horas_semana    Int      @default(48)
+  min_descanso_horas  Int      @default(12)
+  max_dias_seguidos   Int      @default(6)
+  max_cambios_semana  Int      @default(2)
+  fecha_actualizacion DateTime @default(now()) @updatedAt
+
+  id_departamento Int          @unique
+  departamento    Departamento @relation(fields: [id_departamento], references: [id_departamento])
+
+  @@map("configuracion_st")
+}
