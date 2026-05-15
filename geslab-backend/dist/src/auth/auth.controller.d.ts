@@ -6,10 +6,10 @@ export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
     register(dto: RegisterDto): Promise<{
-        nombre: string;
-        email: string;
-        rol: import("@prisma/client").$Enums.Rol;
         id_usuario: number;
+        email: string;
+        nombre: string;
+        rol: import("@prisma/client").$Enums.Rol;
     }>;
     login(dto: LoginDto, response: Response): Promise<{
         message: string;
@@ -24,8 +24,4 @@ export declare class AuthController {
         message: string;
     };
     getMe(request: Request): any;
-    testSA(user: any): {
-        message: string;
-        rol: any;
-    };
 }
