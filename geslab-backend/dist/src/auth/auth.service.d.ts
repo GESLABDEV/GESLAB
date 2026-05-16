@@ -7,8 +7,8 @@ export declare class AuthService {
     private jwtService;
     constructor(prisma: PrismaService, jwtService: JwtService);
     register(dto: RegisterDto): Promise<{
-        email: string;
         nombre: string;
+        email: string;
         rol: import("@prisma/client").$Enums.Rol;
         id_usuario: number;
     }>;
