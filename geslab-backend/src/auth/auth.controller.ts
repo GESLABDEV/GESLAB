@@ -64,13 +64,4 @@ export class AuthController {
   getMe(@Req() request: Request) {
     return this.authService.getMe(request.user);
   }
-
-  // ── ENDPOINT DE PRUEBA RBAC (eliminar en Sprint 3) ──
-@Get('test-sa')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Rol.SA)
-@ApiOperation({ summary: '[PRUEBA] Solo accesible por SA' })
-testSA(@CurrentUser() user: any) {
-  return { message: `Bienvenido SA: ${user.nombre}`, rol: user.rol };
-}
 }

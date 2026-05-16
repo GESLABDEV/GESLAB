@@ -13,9 +13,10 @@ import { SurveysModule } from './surveys/surveys.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './reports/reports.module';
 import { EngineModule } from './engine/engine.module';
+import { DepartmentsModule } from './departments/departments.module';
 
 @Module({
-  imports: [ ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, UsersModule, NoveltiesModule, RequestsModule, ShiftsModule, ComplianceModule, SurveysModule, NotificationsModule, ReportsModule, EngineModule],
+  imports: [ UsersModule, DepartmentsModule, ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, UsersModule, NoveltiesModule, RequestsModule, ShiftsModule, ComplianceModule, SurveysModule, NotificationsModule, ReportsModule, EngineModule],
   controllers: [AppController],
   providers: [AppService],
 })

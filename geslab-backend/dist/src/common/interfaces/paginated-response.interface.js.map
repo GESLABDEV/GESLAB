@@ -1,0 +1,1 @@
+{"version":3,"file":"paginated-response.interface.js","sourceRoot":"","sources":["../../../../src/common/interfaces/paginated-response.interface.ts"],"names":[],"mappings":";;AAQA,wDAOC;AAPD,SAAgB,sBAAsB,CACpC,IAAS,EACT,KAAa,EACb,IAAY,EACZ,KAAa;IAEb,OAAO,EAAE,IAAI,EAAE,KAAK,EAAE,IAAI,EAAE,KAAK,EAAE,UAAU,EAAE,IAAI,CAAC,IAAI,CAAC,KAAK,GAAG,KAAK,CAAC,EAAE,CAAC;AAC5E,CAAC"}

@@ -19,11 +19,6 @@ const login_dto_1 = require("./dto/login.dto");
 const register_dto_1 = require("./dto/register.dto");
 const passport_1 = require("@nestjs/passport");
 const swagger_1 = require("@nestjs/swagger");
-const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
-const roles_guard_1 = require("../common/guards/roles.guard");
-const roles_decorator_1 = require("../common/decorators/roles.decorator");
-const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
-const role_enum_1 = require("../common/enums/role.enum");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -48,9 +43,6 @@ let AuthController = class AuthController {
     }
     getMe(request) {
         return this.authService.getMe(request.user);
-    }
-    testSA(user) {
-        return { message: `Bienvenido SA: ${user.nombre}`, rol: user.rol };
     }
 };
 exports.AuthController = AuthController;
@@ -90,16 +82,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "getMe", null);
-__decorate([
-    (0, common_1.Get)('test-sa'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(role_enum_1.Rol.SA),
-    (0, swagger_1.ApiOperation)({ summary: '[PRUEBA] Solo accesible por SA' }),
-    __param(0, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "testSA", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),
