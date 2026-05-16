@@ -10,6 +10,7 @@ export declare class AuthService {
         id_usuario: number;
         email: string;
         nombre: string;
+        email: string;
         rol: import("@prisma/client").$Enums.Rol;
     }>;
     login(dto: LoginDto): Promise<{
