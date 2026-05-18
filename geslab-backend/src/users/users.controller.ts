@@ -83,4 +83,12 @@ export class UsersController {
   deactivate(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.deactivate(id);
   }
+
+  // PATCH /users/:id/activate — Solo SA
+@Patch(':id/activate')
+@Roles(Rol.SA)
+@ApiOperation({ summary: 'Reactivar usuario desactivado (Solo SA)' })
+activate(@Param('id', ParseIntPipe) id: number) {
+  return this.usersService.activate(id);
+}
 }
