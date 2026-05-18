@@ -153,6 +153,26 @@ let UsersService = class UsersService {
         const { contrasena_hash, ...safe } = user;
         return safe;
     }
+    async activate(id) {
+        const user = await this.prisma.usuario.findUnique({
+            where: { id_usuario: id },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException(`Usuario con ID ${id} no encontrado.`);
+        }
+        if (user.activo) {
+            throw new common_1.ConflictException(`El usuario ${user.nombre} ya se encuentra activo.`);
+        }
+        const updated = await this.prisma.usuario.update({
+            where: { id_usuario: id },
+            data: { activo: true },
+        });
+        return {
+            message: `Usuario ${updated.nombre} reactivado correctamente.`,
+            id: updated.id_usuario,
+            activo: updated.activo,
+        };
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

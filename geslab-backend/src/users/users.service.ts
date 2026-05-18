@@ -136,4 +136,32 @@ export class UsersService {
     const { contrasena_hash, ...safe } = user;    
     return safe;
   }
+
+  // ─── ACTIVATE ─────────────────────────────────────────────
+async activate(id: number) {
+  const user = await this.prisma.usuario.findUnique({
+    where: { id_usuario: id },
+  });
+
+  if (!user) {
+    throw new NotFoundException(`Usuario con ID ${id} no encontrado.`);
+  }
+
+  if (user.activo) {
+    throw new ConflictException(
+      `El usuario ${user.nombre} ya se encuentra activo.`,
+    );
+  }
+
+  const updated = await this.prisma.usuario.update({
+    where: { id_usuario: id },
+    data: { activo: true },
+  });
+
+  return {
+    message: `Usuario ${updated.nombre} reactivado correctamente.`,
+    id:      updated.id_usuario,
+    activo:  updated.activo,
+  };
+}
 }

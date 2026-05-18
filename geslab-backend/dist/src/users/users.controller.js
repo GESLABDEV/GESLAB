@@ -42,6 +42,9 @@ let UsersController = class UsersController {
     deactivate(id) {
         return this.usersService.deactivate(id);
     }
+    activate(id) {
+        return this.usersService.activate(id);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -95,6 +98,15 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "deactivate", null);
+__decorate([
+    (0, common_1.Patch)(':id/activate'),
+    (0, roles_decorator_1.Roles)(client_1.Rol.SA),
+    (0, swagger_1.ApiOperation)({ summary: 'Reactivar usuario desactivado (Solo SA)' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "activate", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('Users'),
     (0, swagger_1.ApiBearerAuth)(),

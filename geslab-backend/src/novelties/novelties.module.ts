@@ -1,4 +1,9 @@
 import { Module } from '@nestjs/common';
+import { NoveltiesController } from './novelties.controller';
+import { NoveltiesService } from './novelties.service';
 
-@Module({})
+@Module({
+  controllers: [NoveltiesController],
+  providers: [NoveltiesService],
+})
 export class NoveltiesModule {}

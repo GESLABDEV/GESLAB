@@ -36,4 +36,9 @@ export declare class UsersService {
         activo: boolean;
     }>;
     private sanitize;
+    activate(id: number): Promise<{
+        message: string;
+        id: number;
+        activo: boolean;
+    }>;
 }
