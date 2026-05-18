@@ -7,12 +7,12 @@ export declare class UsersController {
     create(dto: CreateUserDto): Promise<any>;
     findAll(page?: string, limit?: string, search?: string): Promise<{
         data: {
-            id_usuario: number;
-            email: string;
             nombre: string;
+            email: string;
             rol: import("@prisma/client").$Enums.Rol;
             activo: boolean;
             creado_en: Date;
+            id_usuario: number;
             id_departamento: number | null;
         }[];
         total: number;
@@ -21,12 +21,12 @@ export declare class UsersController {
         totalPages: number;
     }>;
     findOne(id: number): Promise<{
-        id_usuario: number;
-        email: string;
         nombre: string;
+        email: string;
         rol: import("@prisma/client").$Enums.Rol;
         activo: boolean;
         creado_en: Date;
+        id_usuario: number;
         id_departamento: number | null;
     }>;
     update(id: number, dto: UpdateUserDto): Promise<any>;

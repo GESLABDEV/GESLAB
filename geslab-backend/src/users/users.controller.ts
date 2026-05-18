@@ -30,17 +30,17 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // POST /users — Solo SA
+  // POST /users — Solo SA y DMA
   @Post()
-  @Roles(Rol.SA)
+  @Roles(Rol.SA, Rol.ADM)
   @ApiOperation({ summary: 'Crear un nuevo usuario (Solo SA)' })
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }
 
-  // GET /users — Solo SA, con paginación y búsqueda
+  // GET /users — Solo SA y DMA, con paginación y búsqueda
   @Get()
-  @Roles(Rol.SA)
+  @Roles(Rol.SA, Rol.ADM)
   @ApiOperation({ summary: 'Listar todos los usuarios paginados (Solo SA)' })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 20 })
