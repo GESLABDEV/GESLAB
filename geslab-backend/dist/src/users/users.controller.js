@@ -46,7 +46,7 @@ let UsersController = class UsersController {
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)(client_1.Rol.SA),
+    (0, roles_decorator_1.Roles)(client_1.Rol.SA, client_1.Rol.ADM),
     (0, swagger_1.ApiOperation)({ summary: 'Crear un nuevo usuario (Solo SA)' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -55,7 +55,7 @@ __decorate([
 ], UsersController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)(client_1.Rol.SA),
+    (0, roles_decorator_1.Roles)(client_1.Rol.SA, client_1.Rol.ADM),
     (0, swagger_1.ApiOperation)({ summary: 'Listar todos los usuarios paginados (Solo SA)' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, example: 1 }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, example: 20 }),
