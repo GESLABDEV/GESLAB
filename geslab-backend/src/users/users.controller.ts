@@ -14,7 +14,7 @@ import {
   ApiOperation,
   ApiQuery,
   ApiTags,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'; 
 import { Rol } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -30,7 +30,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // POST /users — Solo SA y DMA
+  // POST /users — Solo SA y ADM
   @Post()
   @Roles(Rol.SA, Rol.ADM)
   @ApiOperation({ summary: 'Crear un nuevo usuario (Solo SA)' })
@@ -38,7 +38,7 @@ export class UsersController {
     return this.usersService.create(dto);
   }
 
-  // GET /users — Solo SA y DMA, con paginación y búsqueda
+  // GET /users — Solo SA y ADM, con paginación y búsqueda
   @Get()
   @Roles(Rol.SA, Rol.ADM)
   @ApiOperation({ summary: 'Listar todos los usuarios paginados (Solo SA)' })

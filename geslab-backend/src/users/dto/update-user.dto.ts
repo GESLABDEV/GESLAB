@@ -1,16 +1,29 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 import { Rol } from 'src/common/enums/role.enum';
 import { PartialType, OmitType } from '@nestjs/swagger';
 import { CreateUserDto } from './create-user.dto';
 
 export class UpdateUserDto extends PartialType(
-  OmitType(CreateUserDto, ['password'] as const),
+  OmitType(CreateUserDto, ['contrasena'] as const),
 ) {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   nombre?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  email?: string;
 
   @ApiPropertyOptional({ enum: Rol })
   @IsOptional()
@@ -22,8 +35,15 @@ export class UpdateUserDto extends PartialType(
   @IsNumber()
   id_departamento?: number;
 
-  @ApiPropertyOptional()
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'ID del MOD a asignar. Enviar null para desasignar.',
+  })
   @IsOptional()
-  @IsNumber()
-  id_moderador?: number;
+  @ValidateIf((o) => o.id_moderador !== null)
+  @IsInt()
+  @Min(1)
+  id_moderador?: number | null;
 }

@@ -14,11 +14,11 @@ const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 class CreateUserDto {
-    name;
+    nombre;
     email;
-    password;
-    role;
-    departmentId;
+    contrasena;
+    rol;
+    id_departamento;
 }
 exports.CreateUserDto = CreateUserDto;
 __decorate([
@@ -26,7 +26,7 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateUserDto.prototype, "name", void 0);
+], CreateUserDto.prototype, "nombre", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'juan@empresa.com' }),
     (0, class_validator_1.IsEmail)(),
@@ -37,15 +37,15 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(8),
     __metadata("design:type", String)
-], CreateUserDto.prototype, "password", void 0);
+], CreateUserDto.prototype, "contrasena", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: client_1.Rol, example: client_1.Rol.AGE }),
     (0, class_validator_1.IsEnum)(client_1.Rol),
     __metadata("design:type", String)
-], CreateUserDto.prototype, "role", void 0);
+], CreateUserDto.prototype, "rol", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: 1, description: 'ID del departamento (opcional)' }),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
-], CreateUserDto.prototype, "departmentId", void 0);
+], CreateUserDto.prototype, "id_departamento", void 0);
 //# sourceMappingURL=create-user.dto.js.map

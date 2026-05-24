@@ -45,6 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcryptjs"));
 let UsersService = class UsersService {
     prisma;
@@ -58,14 +59,14 @@ let UsersService = class UsersService {
         if (exists) {
             throw new common_1.ConflictException(`El email ${dto.email} ya está registrado.`);
         }
-        const hashedPassword = await bcrypt.hash(dto.password, 10);
+        const hashedPassword = await bcrypt.hash(dto.contrasena, 10);
         const user = await this.prisma.usuario.create({
             data: {
-                nombre: dto.name,
+                nombre: dto.nombre,
                 email: dto.email,
                 contrasena_hash: hashedPassword,
-                rol: dto.role,
-                id_departamento: dto.departmentId ?? null,
+                rol: dto.rol,
+                id_departamento: dto.id_departamento ?? null,
             },
         });
         return this.sanitize(user);
@@ -93,6 +94,7 @@ let UsersService = class UsersService {
                     rol: true,
                     activo: true,
                     id_departamento: true,
+                    id_moderador: true,
                     creado_en: true,
                 },
             }),
@@ -116,6 +118,7 @@ let UsersService = class UsersService {
                 rol: true,
                 activo: true,
                 id_departamento: true,
+                id_moderador: true,
                 creado_en: true,
             },
         });
@@ -126,13 +129,22 @@ let UsersService = class UsersService {
     }
     async update(id, dto) {
         await this.findOne(id);
+        if (dto.id_moderador !== undefined && dto.id_moderador !== null) {
+            const moderador = await this.prisma.usuario.findUnique({
+                where: { id_usuario: dto.id_moderador },
+            });
+            if (!moderador || moderador.rol !== client_1.Rol.MOD) {
+                throw new common_1.BadRequestException(`El usuario id=${dto.id_moderador} no existe o no tiene rol MOD.`);
+            }
+        }
         const updated = await this.prisma.usuario.update({
             where: { id_usuario: id },
             data: {
-                ...(dto.name && { nombre: dto.name }),
+                ...(dto.nombre && { nombre: dto.nombre }),
                 ...(dto.email && { email: dto.email }),
-                ...(dto.role && { rol: dto.role }),
-                ...(dto.departmentId && { id_departamento: dto.departmentId }),
+                ...(dto.rol && { rol: dto.rol }),
+                ...(dto.id_departamento && { id_departamento: dto.id_departamento }),
+                ...(dto.id_moderador !== undefined && { id_moderador: dto.id_moderador }),
             },
         });
         return this.sanitize(updated);
@@ -148,10 +160,6 @@ let UsersService = class UsersService {
             id: updated.id_usuario,
             activo: updated.activo,
         };
-    }
-    sanitize(user) {
-        const { contrasena_hash, ...safe } = user;
-        return safe;
     }
     async activate(id) {
         const user = await this.prisma.usuario.findUnique({
@@ -172,6 +180,10 @@ let UsersService = class UsersService {
             id: updated.id_usuario,
             activo: updated.activo,
         };
+    }
+    sanitize(user) {
+        const { contrasena_hash, ...safe } = user;
+        return safe;
     }
 };
 exports.UsersService = UsersService;

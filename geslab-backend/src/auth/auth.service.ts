@@ -63,6 +63,7 @@ export class AuthService {
       sub: usuario.id_usuario,   // ← nombre correcto
       email: usuario.email,
       rol: usuario.rol,
+      id_moderador: usuario.id_moderador ?? null
     };
     const token = await this.jwtService.signAsync(payload);
 
@@ -73,6 +74,8 @@ export class AuthService {
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
+        id_moderador: usuario.id_moderador ?? null
+
       },
     };
   }

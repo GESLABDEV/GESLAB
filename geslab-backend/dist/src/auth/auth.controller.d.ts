@@ -18,6 +18,7 @@ export declare class AuthController {
             nombre: string;
             email: string;
             rol: import("@prisma/client").$Enums.Rol;
+            id_moderador: number | null;
         };
     }>;
     logout(response: Response): {

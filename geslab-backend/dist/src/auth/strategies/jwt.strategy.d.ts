@@ -12,6 +12,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         nombre: string;
         rol: import("@prisma/client").$Enums.Rol;
         id_departamento: number | null;
+        id_moderador: number | null;
     }>;
 }
 export {};

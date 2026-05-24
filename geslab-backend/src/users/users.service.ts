@@ -1,4 +1,5 @@
 import {
+  BadRequestException,        // ✅ añadido
   ConflictException,
   Injectable,
   NotFoundException,
@@ -6,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Rol } from '@prisma/client';              // ✅ añadido
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -21,15 +23,15 @@ export class UsersService {
       throw new ConflictException(`El email ${dto.email} ya está registrado.`);
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(dto.contrasena, 10);
 
     const user = await this.prisma.usuario.create({
       data: {
-        nombre:          dto.name,
+        nombre:          dto.nombre,
         email:           dto.email,
-        contrasena_hash:      hashedPassword,
-        rol:             dto.role,
-        id_departamento: dto.departmentId ?? null,
+        contrasena_hash: hashedPassword,
+        rol:             dto.rol,
+        id_departamento: dto.id_departamento ?? null,
       },
     });
 
@@ -62,6 +64,7 @@ export class UsersService {
           rol:             true,
           activo:          true,
           id_departamento: true,
+          id_moderador:    true,
           creado_en:       true,
         },
       }),
@@ -88,6 +91,7 @@ export class UsersService {
         rol:             true,
         activo:          true,
         id_departamento: true,
+        id_moderador:    true,
         creado_en:       true,
       },
     });
@@ -102,13 +106,29 @@ export class UsersService {
   async update(id: number, dto: UpdateUserDto) {
     await this.findOne(id);
 
+  if (dto.id_moderador !== undefined && dto.id_moderador !== null) {
+    const moderador = await this.prisma.usuario.findUnique({
+      where: { id_usuario: dto.id_moderador },
+    });
+    if (!moderador || moderador.rol !== Rol.MOD) {
+      throw new BadRequestException(
+        `El usuario id=${dto.id_moderador} no existe o no tiene rol MOD.`,
+      );
+    }
+  }
+
+  
+
     const updated = await this.prisma.usuario.update({
       where: { id_usuario: id },
       data: {
-        ...(dto.name         && { nombre:          dto.name }),
+        // Campos originales: usan && porque nunca se pasan como null
+        ...(dto.nombre         && { nombre:          dto.nombre }),
         ...(dto.email        && { email:            dto.email }),
-        ...(dto.role         && { rol:              dto.role }),
-        ...(dto.departmentId && { id_departamento:  dto.departmentId }),
+        ...(dto.rol          && { rol:              dto.rol }),
+        ...(dto.id_departamento && { id_departamento:  dto.id_departamento }),
+        // ✅ id_moderador usa !== undefined para que null también se escriba en BD
+        ...(dto.id_moderador !== undefined && { id_moderador: dto.id_moderador }),
       },
     });
 
@@ -125,43 +145,43 @@ export class UsersService {
     });
 
     return {
-      message:  `Usuario ${updated.nombre} desactivado correctamente.`,
-      id:       updated.id_usuario,
-      activo:   updated.activo,
+      message: `Usuario ${updated.nombre} desactivado correctamente.`,
+      id:      updated.id_usuario,
+      activo:  updated.activo,
+    };
+  }
+
+  // ─── ACTIVATE ─────────────────────────────────────────────
+  async activate(id: number) {
+    const user = await this.prisma.usuario.findUnique({
+      where: { id_usuario: id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado.`);
+    }
+
+    if (user.activo) {
+      throw new ConflictException(
+        `El usuario ${user.nombre} ya se encuentra activo.`,
+      );
+    }
+
+    const updated = await this.prisma.usuario.update({
+      where: { id_usuario: id },
+      data: { activo: true },
+    });
+
+    return {
+      message: `Usuario ${updated.nombre} reactivado correctamente.`,
+      id:      updated.id_usuario,
+      activo:  updated.activo,
     };
   }
 
   // ─── HELPER: quitar contraseña del response ───────────────
   private sanitize(user: any) {
-    const { contrasena_hash, ...safe } = user;    
+    const { contrasena_hash, ...safe } = user;
     return safe;
   }
-
-  // ─── ACTIVATE ─────────────────────────────────────────────
-async activate(id: number) {
-  const user = await this.prisma.usuario.findUnique({
-    where: { id_usuario: id },
-  });
-
-  if (!user) {
-    throw new NotFoundException(`Usuario con ID ${id} no encontrado.`);
-  }
-
-  if (user.activo) {
-    throw new ConflictException(
-      `El usuario ${user.nombre} ya se encuentra activo.`,
-    );
-  }
-
-  const updated = await this.prisma.usuario.update({
-    where: { id_usuario: id },
-    data: { activo: true },
-  });
-
-  return {
-    message: `Usuario ${updated.nombre} reactivado correctamente.`,
-    id:      updated.id_usuario,
-    activo:  updated.activo,
-  };
-}
 }

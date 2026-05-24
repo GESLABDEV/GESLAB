@@ -18,12 +18,12 @@ class LoginDto {
 }
 exports.LoginDto = LoginDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'daniel@geslab.com' }),
+    (0, swagger_1.ApiProperty)({ example: '@geslab.com' }),
     (0, class_validator_1.IsEmail)({}, { message: 'El email no tiene un formato válido' }),
     __metadata("design:type", String)
 ], LoginDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'MiPassword123' }),
+    (0, swagger_1.ApiProperty)({ example: 'Admin1234' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6, { message: 'La contraseña debe tener mínimo 6 caracteres' }),
     __metadata("design:type", String)

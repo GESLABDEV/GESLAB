@@ -28,8 +28,21 @@ let AppModule = class AppModule {
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule.forRoot({ isGlobal: true }), prisma_module_1.PrismaModule, auth_module_1.AuthModule,
-            users_module_1.UsersModule, departments_module_1.DepartmentsModule, novelties_module_1.NoveltiesModule, novelties_module_1.NoveltiesModule, requests_module_1.RequestsModule, shifts_module_1.ShiftsModule, compliance_module_1.ComplianceModule, surveys_module_1.SurveysModule, notifications_module_1.NotificationsModule, reports_module_1.ReportsModule, engine_module_1.EngineModule],
+        imports: [
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
+            prisma_module_1.PrismaModule,
+            auth_module_1.AuthModule,
+            users_module_1.UsersModule,
+            departments_module_1.DepartmentsModule,
+            novelties_module_1.NoveltiesModule,
+            requests_module_1.RequestsModule,
+            shifts_module_1.ShiftsModule,
+            compliance_module_1.ComplianceModule,
+            surveys_module_1.SurveysModule,
+            notifications_module_1.NotificationsModule,
+            reports_module_1.ReportsModule,
+            engine_module_1.EngineModule,
+        ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })

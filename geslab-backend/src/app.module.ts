@@ -16,10 +16,22 @@ import { EngineModule } from './engine/engine.module';
 import { DepartmentsModule } from './departments/departments.module';
 
 @Module({
-  imports: [ ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule,
-  UsersModule, DepartmentsModule, NoveltiesModule, NoveltiesModule, RequestsModule, ShiftsModule, ComplianceModule, SurveysModule, NotificationsModule, ReportsModule, EngineModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    DepartmentsModule,
+    NoveltiesModule,
+    RequestsModule,
+    ShiftsModule,
+    ComplianceModule,
+    SurveysModule,
+    NotificationsModule,
+    ReportsModule,
+    EngineModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-
