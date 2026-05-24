@@ -13,7 +13,7 @@ export class CreateUserDto {
   @ApiProperty({ example: 'Juan Pérez' })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  nombre: string;
 
   @ApiProperty({ example: 'juan@empresa.com' })
   @IsEmail()
@@ -22,13 +22,13 @@ export class CreateUserDto {
   @ApiProperty({ example: 'Segura1234', minLength: 8 })
   @IsString()
   @MinLength(8)
-  password: string;
+  contrasena: string;
 
   @ApiProperty({ enum: Rol, example: Rol.AGE })
   @IsEnum(Rol)
-  role: Rol;
+  rol: Rol;
 
   @ApiPropertyOptional({ example: 1, description: 'ID del departamento (opcional)' })
   @IsOptional()
-  departmentId?: number;
+  id_departamento?: number;
 }

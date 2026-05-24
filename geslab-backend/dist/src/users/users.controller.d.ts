@@ -14,6 +14,7 @@ export declare class UsersController {
             activo: boolean;
             creado_en: Date;
             id_departamento: number | null;
+            id_moderador: number | null;
         }[];
         total: number;
         page: number;
@@ -28,6 +29,7 @@ export declare class UsersController {
         activo: boolean;
         creado_en: Date;
         id_departamento: number | null;
+        id_moderador: number | null;
     }>;
     update(id: number, dto: UpdateUserDto): Promise<any>;
     deactivate(id: number): Promise<{

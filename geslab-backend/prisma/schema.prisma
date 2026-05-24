@@ -104,6 +104,9 @@ enum NivelAlerta {
 model Departamento {
   id_departamento Int    @id @default(autoincrement())
   nombre          String @db.VarChar(100)
+  id_administrador Int?
+
+  administrador Usuario? @relation("DepartamentoAdmin", fields: [id_administrador], references: [id_usuario])
 
   usuarios      Usuario[]
   mallas        Malla[]
@@ -123,6 +126,8 @@ model Usuario {
   activo          Boolean  @default(true)
   creado_en       DateTime @default(now())
   actualizado_en  DateTime @updatedAt
+
+  departamento_administrado Departamento[] @relation("DepartamentoAdmin")
 
   id_departamento Int?
   departamento    Departamento? @relation(fields: [id_departamento], references: [id_departamento])

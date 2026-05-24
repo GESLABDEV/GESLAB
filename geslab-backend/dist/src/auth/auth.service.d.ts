@@ -19,6 +19,7 @@ export declare class AuthService {
             nombre: string;
             email: string;
             rol: import("@prisma/client").$Enums.Rol;
+            id_moderador: number | null;
         };
     }>;
     getMe(usuario: any): any;

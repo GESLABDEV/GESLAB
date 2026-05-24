@@ -37,6 +37,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
                 email: true,
                 rol: true,
                 id_departamento: true,
+                id_moderador: true,
             },
         });
         if (!usuario) {

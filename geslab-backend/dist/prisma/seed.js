@@ -43,15 +43,15 @@ const pool = new pg_1.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new adapter_pg_1.PrismaPg(pool);
 const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
-    console.log('🌱 Iniciando seed de GESLAB...\n');
+    console.log('🌱 Iniciando seed de GESLAB — Sprint 5 Clean\n');
     const saltRounds = 10;
-    console.log('👤 Sembrando usuarios...');
+    console.log('👤 [1/4] Sembrando usuarios...');
     const sa = await prisma.usuario.upsert({
-        where: { email: 'admin@geslab.com' },
+        where: { email: 'sa@geslab.com' },
         update: {},
         create: {
             nombre: 'Super Admin',
-            email: 'admin@geslab.com',
+            email: 'sa@geslab.com',
             contrasena_hash: await bcrypt.hash('Admin1234', saltRounds),
             rol: client_1.Rol.SA,
             activo: true,
@@ -63,17 +63,6 @@ async function main() {
         create: {
             nombre: 'Administrador Uno',
             email: 'adm1@geslab.com',
-            contrasena_hash: await bcrypt.hash('Admin1234', saltRounds),
-            rol: client_1.Rol.ADM,
-            activo: true,
-        },
-    });
-    const adm2 = await prisma.usuario.upsert({
-        where: { email: 'adm2@geslab.com' },
-        update: {},
-        create: {
-            nombre: 'Administrador Dos',
-            email: 'adm2@geslab.com',
             contrasena_hash: await bcrypt.hash('Admin1234', saltRounds),
             rol: client_1.Rol.ADM,
             activo: true,
@@ -103,7 +92,7 @@ async function main() {
     });
     const age1 = await prisma.usuario.upsert({
         where: { email: 'age1@geslab.com' },
-        update: {},
+        update: { id_moderador: mod1.id_usuario },
         create: {
             nombre: 'Agente Uno',
             email: 'age1@geslab.com',
@@ -115,7 +104,7 @@ async function main() {
     });
     const age2 = await prisma.usuario.upsert({
         where: { email: 'age2@geslab.com' },
-        update: {},
+        update: { id_moderador: mod1.id_usuario },
         create: {
             nombre: 'Agente Dos',
             email: 'age2@geslab.com',
@@ -149,11 +138,11 @@ async function main() {
             id_moderador: mod2.id_usuario,
         },
     });
-    console.log(`   ✅ SA: ${sa.email}`);
-    console.log(`   ✅ ADMs: ${adm1.email}, ${adm2.email}`);
-    console.log(`   ✅ MODs: ${mod1.email}, ${mod2.email}`);
-    console.log(`   ✅ AGEs: ${age1.email}, ${age2.email}, ${age3.email}, ${age4.email}`);
-    console.log('\n🏢 Sembrando departamentos...');
+    console.log(`   ✅ SA     : ${sa.email}`);
+    console.log(`   ✅ ADM    : ${adm1.email}`);
+    console.log(`   ✅ MODs   : ${mod1.email}, ${mod2.email}`);
+    console.log(`   ✅ AGEs   : ${age1.email}, ${age2.email}, ${age3.email}, ${age4.email}`);
+    console.log('\n🏢 [2/4] Sembrando departamentos...');
     const dept1 = await (async () => {
         const existente = await prisma.departamento.findFirst({
             where: { nombre: 'Atención al Cliente' },
@@ -176,14 +165,14 @@ async function main() {
     })();
     console.log(`   ✅ ${dept1.nombre} (id: ${dept1.id_departamento})`);
     console.log(`   ✅ ${dept2.nombre} (id: ${dept2.id_departamento})`);
-    console.log('\n📬 Sembrando novedades de prueba...');
+    console.log('\n📬 [3/4] Sembrando novedades...');
     const novedadesSeed = [
         {
             tipo: client_1.TipoNovedad.Vacaciones,
             estado: client_1.EstadoNovedad.Registrada,
             fecha_inicio: new Date('2026-06-01'),
             fecha_fin: new Date('2026-06-15'),
-            descripcion: 'Vacaciones aprobadas período junio 2026',
+            descripcion: 'Vacaciones período junio 2026',
             soporte_url: null,
             id_usuario: age1.id_usuario,
             id_registrado_por: adm1.id_usuario,
@@ -203,10 +192,10 @@ async function main() {
             estado: client_1.EstadoNovedad.Registrada,
             fecha_inicio: new Date('2026-06-20'),
             fecha_fin: new Date('2026-06-20'),
-            descripcion: 'Permiso por diligencia personal — cita médica familiar',
+            descripcion: 'Permiso por cita médica familiar',
             soporte_url: null,
             id_usuario: age3.id_usuario,
-            id_registrado_por: adm2.id_usuario,
+            id_registrado_por: adm1.id_usuario,
         },
         {
             tipo: client_1.TipoNovedad.Ausencia,
@@ -216,26 +205,93 @@ async function main() {
             descripcion: 'Ausencia justificada — trámite personal',
             soporte_url: null,
             id_usuario: age4.id_usuario,
-            id_registrado_por: adm2.id_usuario,
+            id_registrado_por: adm1.id_usuario,
         },
     ];
-    for (const novedad of novedadesSeed) {
+    for (const nov of novedadesSeed) {
         const existente = await prisma.novedad.findFirst({
             where: {
-                id_usuario: novedad.id_usuario,
-                tipo: novedad.tipo,
-                fecha_inicio: novedad.fecha_inicio,
+                id_usuario: nov.id_usuario,
+                tipo: nov.tipo,
+                fecha_inicio: nov.fecha_inicio,
             },
         });
         if (!existente) {
-            await prisma.novedad.create({ data: novedad });
-            console.log(`   ✅ Creada: [${novedad.tipo}] para id_usuario=${novedad.id_usuario}`);
+            await prisma.novedad.create({ data: nov });
+            console.log(`   ✅ Creada [${nov.tipo}] → id_usuario=${nov.id_usuario}`);
         }
         else {
-            console.log(`   ⏭️  Ya existe: [${novedad.tipo}] para id_usuario=${novedad.id_usuario} — omitida`);
+            console.log(`   ⏭️  Ya existe [${nov.tipo}] → omitida`);
         }
     }
-    console.log('\n✅ Seed completado exitosamente.\n');
+    console.log('\n📋 [4/4] Sembrando solicitudes (CU-04)...');
+    const solicitudesSeed = [
+        {
+            _key: 'SOL-A1',
+            tipo: client_1.TipoSolicitud.CambioDeTurno,
+            descripcion: '[SOL-A1] AGE solicita cambio de turno — Flujo A, estado Pendiente',
+            estado: client_1.EstadoSolicitud.Pendiente,
+            id_solicitante: age1.id_usuario,
+            id_revisor_moderador: mod1.id_usuario,
+            comentario_moderador: null,
+            comentario_rechazo: null,
+        },
+        {
+            _key: 'SOL-A2',
+            tipo: client_1.TipoSolicitud.CambioDeTurno,
+            descripcion: '[SOL-A2] AGE solicita cambio de turno — Flujo A, estado EnRevision',
+            estado: client_1.EstadoSolicitud.EnRevision,
+            id_solicitante: age2.id_usuario,
+            id_revisor_moderador: mod1.id_usuario,
+            comentario_moderador: 'Revisado por MOD. Procede decisión del ADM.',
+            comentario_rechazo: null,
+        },
+        {
+            _key: 'SOL-B1',
+            tipo: client_1.TipoSolicitud.Vacaciones,
+            descripcion: '[SOL-B1] MOD solicita vacaciones — Flujo B directo a ADM',
+            estado: client_1.EstadoSolicitud.Pendiente,
+            id_solicitante: mod1.id_usuario,
+            id_revisor_moderador: null,
+            comentario_moderador: null,
+            comentario_rechazo: null,
+        },
+        {
+            _key: 'SOL-C1',
+            tipo: client_1.TipoSolicitud.Vacaciones,
+            descripcion: '[SOL-C1] ADM solicita vacaciones — Flujo C directo a SA',
+            estado: client_1.EstadoSolicitud.Pendiente,
+            id_solicitante: adm1.id_usuario,
+            id_revisor_moderador: null,
+            comentario_moderador: null,
+            comentario_rechazo: null,
+        },
+    ];
+    for (const sol of solicitudesSeed) {
+        const { _key, ...data } = sol;
+        const existente = await prisma.solicitud.findFirst({
+            where: {
+                id_solicitante: data.id_solicitante,
+                tipo: data.tipo,
+                descripcion: data.descripcion,
+            },
+        });
+        if (!existente) {
+            const creada = await prisma.solicitud.create({ data });
+            console.log(`   ✅ ${_key} creada (id: ${creada.id_solicitud})`);
+        }
+        else {
+            console.log(`   ⏭️  ${_key} ya existe (id: ${existente.id_solicitud}) — omitida`);
+        }
+    }
+    console.log('\n✅ Seed Sprint 5 completado.\n');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📌 Mapa para el plan de pruebas:');
+    console.log('   SOL-A1 → age1@geslab.com  | Pendiente   | revisor: mod1  → caso #2');
+    console.log('   SOL-A2 → age2@geslab.com  | EnRevision  | revisor: mod1  → caso #5');
+    console.log('   SOL-B1 → mod1@geslab.com  | Pendiente   | sin revisor    → caso #9');
+    console.log('   SOL-C1 → adm1@geslab.com  | Pendiente   | sin revisor    → caso #11');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 }
 main()
     .catch((e) => {

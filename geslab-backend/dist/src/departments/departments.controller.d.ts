@@ -15,6 +15,7 @@ export declare class DepartmentsController {
     } & {
         nombre: string;
         id_departamento: number;
+        id_administrador: number | null;
     }>>;
     findOne(id: number): Promise<{
         usuarios: {
@@ -26,17 +27,21 @@ export declare class DepartmentsController {
     } & {
         nombre: string;
         id_departamento: number;
+        id_administrador: number | null;
     }>;
     create(dto: CreateDepartmentDto): Promise<{
         nombre: string;
         id_departamento: number;
+        id_administrador: number | null;
     }>;
     update(id: number, dto: UpdateDepartmentDto): Promise<{
         nombre: string;
         id_departamento: number;
+        id_administrador: number | null;
     }>;
     remove(id: number): Promise<{
         nombre: string;
         id_departamento: number;
+        id_administrador: number | null;
     }>;
 }
