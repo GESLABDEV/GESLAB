@@ -51,9 +51,9 @@ export class RequestsService {
   ) {
     const skip = (page - 1) * limit;
     const where: any = {};
-    if (tipo)       where.tipo   = tipo;
-    if (estado)     where.estado = estado;
-    if (id_usuario) where.id_solicitante = id_usuario;
+    if (tipo)       where.tipo            = tipo;
+    if (estado)     where.estado          = estado;
+    if (id_usuario) where.id_solicitante  = id_usuario;
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.solicitud.findMany({
@@ -70,13 +70,7 @@ export class RequestsService {
       this.prisma.solicitud.count({ where }),
     ]);
 
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   // ─── MIS SOLICITUDES (AGE / MOD / ADM) ────────────────────
@@ -122,9 +116,7 @@ export class RequestsService {
       },
     });
 
-    if (!solicitud) {
-      throw new NotFoundException(`Solicitud ${id} no encontrada.`);
-    }
+    if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada.`);
 
     if (
       usuario.rol === Rol.AGE &&
@@ -143,11 +135,13 @@ export class RequestsService {
     });
 
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada.`);
+
     if (solicitud.estado !== 'Pendiente') {
       throw new BadRequestException(
         `La solicitud ya está en estado "${solicitud.estado}". Solo se pueden revisar solicitudes Pendientes.`,
       );
     }
+
     if (solicitud.id_revisor_moderador !== moderador.id_usuario) {
       throw new ForbiddenException('Esta solicitud no pertenece a tu equipo.');
     }
@@ -163,8 +157,6 @@ export class RequestsService {
 
   // ─── DECIDIR (ADM / SA) → Aprobada | Rechazada ────────────
   async decide(id: number, dto: DecideRequestDto, decisor: any) {
-    // ✅ FIX S5-BUG-001: se elimina el include de solicitante.rol
-    //    La fuente de verdad del flujo es id_revisor_moderador, no el rol.
     const solicitud = await this.prisma.solicitud.findUnique({
       where: { id_solicitud: id },
     });
@@ -173,42 +165,27 @@ export class RequestsService {
 
     const estadoActual = solicitud.estado;
 
-    // ✅ FIX S5-BUG-001 — Validación basada en id_revisor_moderador
-    // Flujo A: tiene revisor asignado → OBLIGATORIO pasar por EnRevision primero
-    if (
-      solicitud.id_revisor_moderador !== null &&
-      estadoActual !== 'EnRevision'
-    ) {
+    // Flujo A: tiene revisor → OBLIGATORIO pasar por EnRevision
+    if (solicitud.id_revisor_moderador !== null && estadoActual !== 'EnRevision') {
       throw new BadRequestException(
         'Esta solicitud requiere revisión del Moderador antes de ser decidida (Flujo A).',
       );
     }
 
     // Flujos B y C: sin revisor → debe estar en Pendiente
-    if (
-      solicitud.id_revisor_moderador === null &&
-      estadoActual !== 'Pendiente'
-    ) {
+    if (solicitud.id_revisor_moderador === null && estadoActual !== 'Pendiente') {
       throw new BadRequestException(
         `La solicitud ya fue procesada (estado: "${estadoActual}").`,
       );
     }
 
-    const comentario_rechazo = dto.comentario_rechazo;
-
-    // RN-002: rechazo siempre requiere comentario
-    if (dto.estado === 'Rechazada' && !comentario_rechazo) {
-      throw new BadRequestException(
-        'El comentario de rechazo es obligatorio (RN-002).',
-      );
-    }
-
+    // dto.comentario ya viene validado por el DTO (obligatorio, solo letras)
     return this.prisma.solicitud.update({
       where: { id_solicitud: id },
       data: {
-        estado:             dto.estado,
-        comentario_rechazo: comentario_rechazo ?? null,
-        id_aprobador:       decisor.id_usuario,
+        estado:       dto.estado,
+        comentario:   dto.comentario,
+        id_aprobador: decisor.id_usuario,
       },
     });
   }

@@ -61,13 +61,7 @@ let RequestsService = class RequestsService {
             }),
             this.prisma.solicitud.count({ where }),
         ]);
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit),
-        };
+        return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
     }
     async findMy(userId, page = 1, limit = 20) {
         const skip = (page - 1) * limit;
@@ -104,9 +98,8 @@ let RequestsService = class RequestsService {
                 aprobador: { select: { id_usuario: true, nombre: true } },
             },
         });
-        if (!solicitud) {
+        if (!solicitud)
             throw new common_1.NotFoundException(`Solicitud ${id} no encontrada.`);
-        }
         if (usuario.rol === client_1.Rol.AGE &&
             solicitud.id_solicitante !== usuario.id_usuario) {
             throw new common_1.ForbiddenException('Solo puedes ver tus propias solicitudes.');
@@ -140,23 +133,17 @@ let RequestsService = class RequestsService {
         if (!solicitud)
             throw new common_1.NotFoundException(`Solicitud ${id} no encontrada.`);
         const estadoActual = solicitud.estado;
-        if (solicitud.id_revisor_moderador !== null &&
-            estadoActual !== 'EnRevision') {
+        if (solicitud.id_revisor_moderador !== null && estadoActual !== 'EnRevision') {
             throw new common_1.BadRequestException('Esta solicitud requiere revisión del Moderador antes de ser decidida (Flujo A).');
         }
-        if (solicitud.id_revisor_moderador === null &&
-            estadoActual !== 'Pendiente') {
+        if (solicitud.id_revisor_moderador === null && estadoActual !== 'Pendiente') {
             throw new common_1.BadRequestException(`La solicitud ya fue procesada (estado: "${estadoActual}").`);
-        }
-        const comentario_rechazo = dto.comentario_rechazo;
-        if (dto.estado === 'Rechazada' && !comentario_rechazo) {
-            throw new common_1.BadRequestException('El comentario de rechazo es obligatorio (RN-002).');
         }
         return this.prisma.solicitud.update({
             where: { id_solicitud: id },
             data: {
                 estado: dto.estado,
-                comentario_rechazo: comentario_rechazo ?? null,
+                comentario: dto.comentario,
                 id_aprobador: decisor.id_usuario,
             },
         });

@@ -3,68 +3,101 @@ import { validate } from 'class-validator';
 import { DecideRequestDto, DecisionEstado } from './decide-request.dto';
 
 describe('DecideRequestDto', () => {
-  it('acepta un motivo compuesto solo por letras', async () => {
+  // ─── CASOS VÁLIDOS ────────────────────────────────────────
+
+  it('acepta comentario de texto libre con puntuación al Rechazar', async () => {
     const dto = plainToInstance(DecideRequestDto, {
       estado: DecisionEstado.Rechazada,
-      comentario_rechazo: 'MotivoValido',
+      comentario: 'Se rechaza por falta de personal.',
     });
-
-    const errors = await validate(dto);
-
-    expect(errors).toHaveLength(0);
+    expect(await validate(dto)).toHaveLength(0);
   });
 
-  it('acepta un comentario libre cuando la decisión es Aprobada', async () => {
+  it('acepta comentario con fecha y horario al Aprobar', async () => {
     const dto = plainToInstance(DecideRequestDto, {
       estado: DecisionEstado.Aprobada,
-      comentario_rechazo: 'Se aprueba solicitud. FLUJO B - ADM1',
+      comentario: 'Se aprueba, debe regresar el 20/06 en el horario de 8:00 a 6:00.',
     });
-
-    const errors = await validate(dto);
-
-    expect(errors).toHaveLength(0);
+    expect(await validate(dto)).toHaveLength(0);
   });
 
-  it('rechaza un motivo con espacios', async () => {
+  it('acepta comentario con coma y punto', async () => {
     const dto = plainToInstance(DecideRequestDto, {
-      estado: DecisionEstado.Rechazada,
-      comentario_rechazo: 'Motivo invalido',
+      estado: DecisionEstado.Aprobada,
+      comentario: 'Solicitud aprobada, revisar con el equipo.',
     });
-
-    const errors = await validate(dto);
-
-    expect(errors).not.toHaveLength(0);
-    expect(errors[0].constraints).toEqual(
-      expect.objectContaining({
-        matches: expect.any(String),
-      }),
-    );
+    expect(await validate(dto)).toHaveLength(0);
   });
 
-  it('rechaza un motivo con caracteres especiales', async () => {
+  it('acepta comentario con tildes y ñ', async () => {
     const dto = plainToInstance(DecideRequestDto, {
       estado: DecisionEstado.Rechazada,
-      comentario_rechazo: 'Motivo!',
+      comentario: 'Se rechaza según política de la empresa.',
     });
-
-    const errors = await validate(dto);
-
-    expect(errors).not.toHaveLength(0);
-    expect(errors[0].constraints).toEqual(
-      expect.objectContaining({
-        matches: expect.any(String),
-      }),
-    );
+    expect(await validate(dto)).toHaveLength(0);
   });
 
-  it('rechaza un motivo formado solo por espacios', async () => {
+  // ─── CASOS INVÁLIDOS ──────────────────────────────────────
+
+  it('rechaza un solo punto', async () => {
+    const dto = plainToInstance(DecideRequestDto, {
+      estado: DecisionEstado.Aprobada,
+      comentario: '.',
+    });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rechaza solo números', async () => {
+    const dto = plainToInstance(DecideRequestDto, {
+      estado: DecisionEstado.Aprobada,
+      comentario: '23',
+    });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rechaza comentario que empieza con número', async () => {
+    const dto = plainToInstance(DecideRequestDto, {
+      estado: DecisionEstado.Aprobada,
+      comentario: '20/06 aprobado el turno.',
+    });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rechaza comentario vacío', async () => {
+    const dto = plainToInstance(DecideRequestDto, {
+      estado: DecisionEstado.Aprobada,
+      comentario: '',
+    });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rechaza cuando falta el comentario', async () => {
+    const dto = plainToInstance(DecideRequestDto, {
+      estado: DecisionEstado.Aprobada,
+    });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rechaza comentario menor a 10 caracteres', async () => {
+    const dto = plainToInstance(DecideRequestDto, {
+      estado: DecisionEstado.Aprobada,
+      comentario: 'Corto',
+    });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rechaza comentario con caracteres especiales como @, #, $', async () => {
     const dto = plainToInstance(DecideRequestDto, {
       estado: DecisionEstado.Rechazada,
-      comentario_rechazo: '   ',
+      comentario: 'Se rechaza por #falta de personal.',
     });
-
     const errors = await validate(dto);
-
-    expect(errors).not.toHaveLength(0);
+    expect(errors.length).toBeGreaterThan(0);
   });
 });

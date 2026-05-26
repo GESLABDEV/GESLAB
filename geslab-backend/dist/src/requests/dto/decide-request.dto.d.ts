@@ -4,5 +4,5 @@ export declare enum DecisionEstado {
 }
 export declare class DecideRequestDto {
     estado: DecisionEstado;
-    comentario_rechazo?: string;
+    comentario: string;
 }
