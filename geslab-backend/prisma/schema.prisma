@@ -102,8 +102,8 @@ enum NivelAlerta {
 // ─── MODELOS ─────────────────────────────────────────────────
 
 model Departamento {
-  id_departamento Int    @id @default(autoincrement())
-  nombre          String @db.VarChar(100)
+  id_departamento  Int    @id @default(autoincrement())
+  nombre           String @db.VarChar(100)
   id_administrador Int?
 
   administrador Usuario? @relation("DepartamentoAdmin", fields: [id_administrador], references: [id_usuario])
@@ -224,7 +224,8 @@ model Solicitud {
   descripcion          String          @db.Text
   fecha_solicitud      DateTime        @default(now())
   estado               EstadoSolicitud @default(Pendiente)
-  comentario_rechazo   String?         @db.VarChar(1000)
+  // ✅ A1: comentario_rechazo → comentario (aplica a Aprobada y Rechazada)
+  comentario           String?         @db.VarChar(1000)
   comentario_moderador String?         @db.VarChar(1000)
   soporte_url          String?         @db.VarChar(500)
 

@@ -19,7 +19,7 @@ var DecisionEstado;
 })(DecisionEstado || (exports.DecisionEstado = DecisionEstado = {}));
 class DecideRequestDto {
     estado;
-    comentario_rechazo;
+    comentario;
 }
 exports.DecideRequestDto = DecideRequestDto;
 __decorate([
@@ -31,18 +31,22 @@ __decorate([
     __metadata("design:type", String)
 ], DecideRequestDto.prototype, "estado", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        example: 'MotivoValido',
+    (0, swagger_1.ApiProperty)({
+        example: 'Se aprueba, debe regresar el 20/06 en el horario de 8:00 a 6:00.',
+        minLength: 10,
         maxLength: 1000,
-        description: 'Solo se valida cuando el estado es Rechazada.',
+        description: 'Obligatorio para cualquier decisión. ' +
+            'Debe empezar con letra. ' +
+            'Permite letras, números, espacios y puntuación básica (. , ; : / - ()). ' +
+            'Mínimo 10 caracteres.',
     }),
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(1000),
-    (0, class_validator_1.ValidateIf)((o) => o.estado === DecisionEstado.Rechazada),
-    (0, class_validator_1.Matches)(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+$/, {
-        message: 'El comentario de rechazo debe contener solo letras, sin espacios ni caracteres especiales.',
+    (0, class_validator_1.IsNotEmpty)({ message: 'El comentario es obligatorio.' }),
+    (0, class_validator_1.MinLength)(10, { message: 'El comentario debe tener al menos 10 caracteres.' }),
+    (0, class_validator_1.MaxLength)(1000, { message: 'El comentario no puede superar los 1000 caracteres.' }),
+    (0, class_validator_1.Matches)(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s.,;:/\-()\u00C0-\u024F#$%]*$/, {
+        message: 'El comentario debe comenzar con una letra y puede contener letras, números, espacios y puntuación básica (. , ; : / - ).',
     }),
     __metadata("design:type", String)
-], DecideRequestDto.prototype, "comentario_rechazo", void 0);
+], DecideRequestDto.prototype, "comentario", void 0);
 //# sourceMappingURL=decide-request.dto.js.map

@@ -246,7 +246,7 @@ const age2 = await prisma.usuario.upsert({
     id_solicitante: number;
     id_revisor_moderador: number | null;
     comentario_moderador: string | null;
-    comentario_rechazo: string | null;   // ← nombre correcto del schema
+    comentario: string | null;   // ← nombre correcto del schema
   };
 
   const solicitudesSeed: SolicitudSeed[] = [
@@ -258,7 +258,7 @@ const age2 = await prisma.usuario.upsert({
       id_solicitante: age1.id_usuario,
       id_revisor_moderador: mod1.id_usuario,
       comentario_moderador: null,
-      comentario_rechazo: null,
+      comentario: null,
     },
     {
       _key: 'SOL-A2',
@@ -268,7 +268,7 @@ const age2 = await prisma.usuario.upsert({
       id_solicitante: age2.id_usuario,
       id_revisor_moderador: mod1.id_usuario,
       comentario_moderador: 'Revisado por MOD. Procede decisión del ADM.',
-      comentario_rechazo: null,
+      comentario: null,
     },
     {
       _key: 'SOL-B1',
@@ -278,7 +278,7 @@ const age2 = await prisma.usuario.upsert({
       id_solicitante: mod1.id_usuario,
       id_revisor_moderador: null,
       comentario_moderador: null,
-      comentario_rechazo: null,
+      comentario: null,
     },
     {
       _key: 'SOL-C1',
@@ -288,7 +288,7 @@ const age2 = await prisma.usuario.upsert({
       id_solicitante: adm1.id_usuario,
       id_revisor_moderador: null,
       comentario_moderador: null,
-      comentario_rechazo: null,
+      comentario: null,
     },
   ];
 
