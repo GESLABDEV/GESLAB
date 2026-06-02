@@ -12,10 +12,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateNoveltyDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const client_1 = require("@prisma/client");
 class UpdateNoveltyDto {
     fecha_inicio;
     fecha_fin;
     descripcion;
+    tipo;
     soporte_url;
 }
 exports.UpdateNoveltyDto = UpdateNoveltyDto;
@@ -38,6 +40,12 @@ __decorate([
     (0, class_validator_1.MinLength)(10),
     __metadata("design:type", String)
 ], UpdateNoveltyDto.prototype, "descripcion", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.TipoNovedad, example: client_1.TipoNovedad.Vacaciones }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.TipoNovedad),
+    __metadata("design:type", String)
+], UpdateNoveltyDto.prototype, "tipo", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),

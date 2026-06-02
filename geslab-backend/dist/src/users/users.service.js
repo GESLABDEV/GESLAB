@@ -47,17 +47,48 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcryptjs"));
+const ROL_SUPERVISOR_REQUERIDO = {
+    [client_1.Rol.AGE]: client_1.Rol.MOD,
+    [client_1.Rol.MOD]: client_1.Rol.ADM,
+    [client_1.Rol.ADM]: client_1.Rol.SA,
+};
 let UsersService = class UsersService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async create(dto) {
+    async validarScopeDepto(id_usuario_objetivo, caller) {
+        if (caller.rol === client_1.Rol.SA)
+            return;
+        if (caller.acceso_global)
+            return;
+        if (!caller.id_departamento) {
+            throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+        }
+        const objetivo = await this.prisma.usuario.findUnique({
+            where: { id_usuario: id_usuario_objetivo },
+            select: { id_departamento: true },
+        });
+        if (!objetivo) {
+            throw new common_1.NotFoundException(`Usuario con ID ${id_usuario_objetivo} no encontrado.`);
+        }
+        if (objetivo.id_departamento !== caller.id_departamento) {
+            throw new common_1.ForbiddenException('No puedes gestionar usuarios fuera de tu departamento.');
+        }
+    }
+    async create(dto, caller) {
         const exists = await this.prisma.usuario.findUnique({
             where: { email: dto.email },
         });
         if (exists) {
             throw new common_1.ConflictException(`El email ${dto.email} ya está registrado.`);
+        }
+        let id_departamento = dto.id_departamento ?? null;
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            if (!caller.id_departamento) {
+                throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+            }
+            id_departamento = caller.id_departamento;
         }
         const hashedPassword = await bcrypt.hash(dto.contrasena, 10);
         const user = await this.prisma.usuario.create({
@@ -66,21 +97,29 @@ let UsersService = class UsersService {
                 email: dto.email,
                 contrasena_hash: hashedPassword,
                 rol: dto.rol,
-                id_departamento: dto.id_departamento ?? null,
+                id_departamento,
             },
         });
         return this.sanitize(user);
     }
-    async findAll(page = 1, limit = 20, search) {
+    async findAll(caller, page = 1, limit = 20, search) {
         const skip = (page - 1) * limit;
+        const scopeWhere = {};
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            if (!caller.id_departamento) {
+                throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+            }
+            scopeWhere.id_departamento = caller.id_departamento;
+        }
         const where = search
             ? {
+                ...scopeWhere,
                 OR: [
                     { nombre: { contains: search, mode: 'insensitive' } },
                     { email: { contains: search, mode: 'insensitive' } },
                 ],
             }
-            : {};
+            : scopeWhere;
         const [data, total] = await this.prisma.$transaction([
             this.prisma.usuario.findMany({
                 where,
@@ -100,15 +139,12 @@ let UsersService = class UsersService {
             }),
             this.prisma.usuario.count({ where }),
         ]);
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit),
-        };
+        return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
     }
-    async findOne(id) {
+    async findOne(id, caller) {
+        if (caller) {
+            await this.validarScopeDepto(id, caller);
+        }
         const user = await this.prisma.usuario.findUnique({
             where: { id_usuario: id },
             select: {
@@ -127,14 +163,25 @@ let UsersService = class UsersService {
         }
         return user;
     }
-    async update(id, dto) {
-        await this.findOne(id);
+    async update(id, dto, caller) {
+        await this.validarScopeDepto(id, caller);
+        const usuarioActual = await this.findOne(id);
+        const rolEfectivo = dto.rol ?? usuarioActual.rol;
         if (dto.id_moderador !== undefined && dto.id_moderador !== null) {
-            const moderador = await this.prisma.usuario.findUnique({
+            if (rolEfectivo === client_1.Rol.SA) {
+                throw new common_1.BadRequestException('Un usuario con rol SA no puede tener supervisor.');
+            }
+            const rolSupervisorRequerido = ROL_SUPERVISOR_REQUERIDO[rolEfectivo];
+            const supervisor = await this.prisma.usuario.findUnique({
                 where: { id_usuario: dto.id_moderador },
+                select: { id_usuario: true, nombre: true, rol: true, activo: true },
             });
-            if (!moderador || moderador.rol !== client_1.Rol.MOD) {
-                throw new common_1.BadRequestException(`El usuario id=${dto.id_moderador} no existe o no tiene rol MOD.`);
+            if (!supervisor) {
+                throw new common_1.BadRequestException(`El usuario id=${dto.id_moderador} no existe.`);
+            }
+            if (supervisor.rol !== rolSupervisorRequerido) {
+                throw new common_1.BadRequestException(`El supervisor de un ${rolEfectivo} debe tener rol ${rolSupervisorRequerido}. ` +
+                    `El usuario seleccionado tiene rol ${supervisor.rol}.`);
             }
         }
         const updated = await this.prisma.usuario.update({
@@ -149,7 +196,8 @@ let UsersService = class UsersService {
         });
         return this.sanitize(updated);
     }
-    async deactivate(id) {
+    async deactivate(id, caller) {
+        await this.validarScopeDepto(id, caller);
         await this.findOne(id);
         const updated = await this.prisma.usuario.update({
             where: { id_usuario: id },
@@ -161,7 +209,8 @@ let UsersService = class UsersService {
             activo: updated.activo,
         };
     }
-    async activate(id) {
+    async activate(id, caller) {
+        await this.validarScopeDepto(id, caller);
         const user = await this.prisma.usuario.findUnique({
             where: { id_usuario: id },
         });

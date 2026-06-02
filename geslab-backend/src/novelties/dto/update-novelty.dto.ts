@@ -1,10 +1,12 @@
 import {
   IsDateString,
+  IsEnum,
   IsString,
   IsOptional,
   MinLength,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { TipoNovedad } from '@prisma/client'; 
 
 export class UpdateNoveltyDto {
   @ApiPropertyOptional({ example: '2026-06-02' })
@@ -22,6 +24,12 @@ export class UpdateNoveltyDto {
   @IsString()
   @MinLength(10)
   descripcion?: string;
+
+  // ✅ B5 — tipo siempre editable
+  @ApiPropertyOptional({ enum: TipoNovedad, example: TipoNovedad.Vacaciones })
+  @IsOptional()
+  @IsEnum(TipoNovedad)
+  tipo?: TipoNovedad;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -12,12 +12,57 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NoveltiesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_1 = require("@prisma/client");
 let NoveltiesService = class NoveltiesService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async create(dto, registradoPorId) {
+    async validarScopeUsuario(id_usuario, caller) {
+        if (caller.rol === client_1.Rol.SA)
+            return;
+        if (caller.acceso_global)
+            return;
+        if (!caller.id_departamento) {
+            throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+        }
+        const usuario = await this.prisma.usuario.findUnique({
+            where: { id_usuario },
+            select: { id_departamento: true },
+        });
+        if (!usuario) {
+            throw new common_1.NotFoundException(`Usuario ${id_usuario} no encontrado.`);
+        }
+        if (usuario.id_departamento !== caller.id_departamento) {
+            throw new common_1.ForbiddenException('No puedes registrar novedades a usuarios fuera de tu departamento.');
+        }
+    }
+    async validarScopeNovedad(id_novedad, caller) {
+        if (caller.rol === client_1.Rol.SA)
+            return;
+        if (caller.rol === client_1.Rol.MOD)
+            return;
+        if (caller.acceso_global)
+            return;
+        if (!caller.id_departamento) {
+            throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+        }
+        const novedad = await this.prisma.novedad.findUnique({
+            where: { id_novedad },
+            select: { afectado: { select: { id_departamento: true } } },
+        });
+        if (!novedad) {
+            throw new common_1.NotFoundException(`Novedad ${id_novedad} no encontrada.`);
+        }
+        if (novedad.afectado.id_departamento !== caller.id_departamento) {
+            throw new common_1.ForbiddenException('No puedes gestionar novedades fuera de tu departamento.');
+        }
+    }
+    async create(dto, caller) {
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            throw new common_1.ForbiddenException('Solo el administrador global puede registrar novedades.');
+        }
+        await this.validarScopeUsuario(dto.id_usuario, caller);
         const usuario = await this.prisma.usuario.findUnique({
             where: { id_usuario: dto.id_usuario },
         });
@@ -48,13 +93,23 @@ let NoveltiesService = class NoveltiesService {
                 descripcion: dto.descripcion,
                 soporte_url: dto.soporte_url,
                 id_usuario: dto.id_usuario,
-                id_registrado_por: registradoPorId,
+                id_registrado_por: caller.id_usuario,
             },
         });
     }
-    async findAll(page = 1, limit = 20, tipo, id_usuario) {
+    async findAll(caller, page = 1, limit = 20, tipo, id_usuario) {
         const skip = (page - 1) * limit;
-        const where = { NOT: { estado: 'Eliminada' } };
+        const scopeAfectado = {};
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            if (!caller.id_departamento) {
+                throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+            }
+            scopeAfectado.afectado = { id_departamento: caller.id_departamento };
+        }
+        const where = {
+            NOT: { estado: 'Eliminada' },
+            ...scopeAfectado,
+        };
         if (tipo)
             where.tipo = tipo;
         if (id_usuario)
@@ -72,13 +127,7 @@ let NoveltiesService = class NoveltiesService {
             }),
             this.prisma.novedad.count({ where }),
         ]);
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit),
-        };
+        return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
     }
     async findTeam(moderadorId) {
         return this.prisma.novedad.findMany({
@@ -92,7 +141,10 @@ let NoveltiesService = class NoveltiesService {
             },
         });
     }
-    async findOne(id) {
+    async findOne(id, caller) {
+        if (caller) {
+            await this.validarScopeNovedad(id, caller);
+        }
         const novedad = await this.prisma.novedad.findUnique({
             where: { id_novedad: id },
             include: {
@@ -105,22 +157,33 @@ let NoveltiesService = class NoveltiesService {
         }
         return novedad;
     }
-    async update(id, dto) {
+    async update(id, dto, caller) {
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            throw new common_1.ForbiddenException('Solo el administrador global puede modificar novedades.');
+        }
+        await this.validarScopeNovedad(id, caller);
         const novedad = await this.findOne(id);
-        if (new Date(novedad.fecha_inicio) <= new Date()) {
-            throw new common_1.UnprocessableEntityException('No se puede editar una novedad cuya fecha de inicio ya ocurrió.');
+        const quiereCambiarFechas = dto.fecha_inicio || dto.fecha_fin;
+        const fechaInicioPasada = new Date(novedad.fecha_inicio) <= new Date();
+        if (quiereCambiarFechas && fechaInicioPasada) {
+            throw new common_1.UnprocessableEntityException('No se pueden modificar las fechas de una novedad cuya fecha de inicio ya ocurrió.');
         }
         return this.prisma.novedad.update({
             where: { id_novedad: id },
             data: {
                 ...(dto.fecha_inicio && { fecha_inicio: new Date(dto.fecha_inicio) }),
                 ...(dto.fecha_fin && { fecha_fin: new Date(dto.fecha_fin) }),
+                ...(dto.tipo && { tipo: dto.tipo }),
                 ...(dto.descripcion && { descripcion: dto.descripcion }),
                 ...(dto.soporte_url !== undefined && { soporte_url: dto.soporte_url }),
             },
         });
     }
-    async remove(id) {
+    async remove(id, caller) {
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            throw new common_1.ForbiddenException('Solo el administrador global puede eliminar novedades.');
+        }
+        await this.validarScopeNovedad(id, caller);
         const novedad = await this.findOne(id);
         if (novedad.estado === 'Eliminada') {
             throw new common_1.ConflictException('La novedad ya fue eliminada.');
@@ -128,6 +191,21 @@ let NoveltiesService = class NoveltiesService {
         return this.prisma.novedad.update({
             where: { id_novedad: id },
             data: { estado: 'Eliminada' },
+        });
+    }
+    async findByDepartment(id_departamento) {
+        if (!id_departamento) {
+            throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA para que te asigne uno.');
+        }
+        return this.prisma.novedad.findMany({
+            where: {
+                estado: { in: ['Registrada', 'Activa'] },
+                afectado: { id_departamento },
+            },
+            orderBy: { fecha_inicio: 'asc' },
+            include: {
+                afectado: { select: { id_usuario: true, nombre: true, email: true } },
+            },
         });
     }
 };

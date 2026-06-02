@@ -33,6 +33,7 @@ async validate(payload: any) {
       rol: true,
       id_departamento: true,
       id_moderador: true,
+      acceso_global: true
     },
   });
 
