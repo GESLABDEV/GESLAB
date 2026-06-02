@@ -4,8 +4,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
-    create(dto: CreateUserDto): Promise<any>;
-    findAll(page?: string, limit?: string, search?: string): Promise<{
+    create(dto: CreateUserDto, caller: any): Promise<any>;
+    findAll(caller: any, page?: string, limit?: string, search?: string): Promise<{
         data: {
             id_usuario: number;
             email: string;
@@ -21,7 +21,7 @@ export declare class UsersController {
         limit: number;
         totalPages: number;
     }>;
-    findOne(id: number): Promise<{
+    findOne(id: number, caller: any): Promise<{
         id_usuario: number;
         email: string;
         nombre: string;
@@ -31,13 +31,13 @@ export declare class UsersController {
         id_departamento: number | null;
         id_moderador: number | null;
     }>;
-    update(id: number, dto: UpdateUserDto): Promise<any>;
-    deactivate(id: number): Promise<{
+    update(id: number, dto: UpdateUserDto, caller: any): Promise<any>;
+    deactivate(id: number, caller: any): Promise<{
         message: string;
         id: number;
         activo: boolean;
     }>;
-    activate(id: number): Promise<{
+    activate(id: number, caller: any): Promise<{
         message: string;
         id: number;
         activo: boolean;

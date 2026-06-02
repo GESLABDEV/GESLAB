@@ -28,30 +28,33 @@ let NoveltiesController = class NoveltiesController {
     constructor(noveltiesService) {
         this.noveltiesService = noveltiesService;
     }
-    create(dto, user) {
-        return this.noveltiesService.create(dto, user.id_usuario);
+    create(dto, caller) {
+        return this.noveltiesService.create(dto, caller);
     }
-    findAll(page, limit, tipo, id_usuario) {
-        return this.noveltiesService.findAll(page ? parseInt(page) : 1, limit ? parseInt(limit) : 20, tipo, id_usuario ? parseInt(id_usuario) : undefined);
+    findAll(caller, page, limit, tipo, id_usuario) {
+        return this.noveltiesService.findAll(caller, page ? parseInt(page) : 1, limit ? parseInt(limit) : 20, tipo, id_usuario ? parseInt(id_usuario) : undefined);
     }
     findTeam(user) {
         return this.noveltiesService.findTeam(user.id_usuario);
     }
-    findOne(id) {
-        return this.noveltiesService.findOne(id);
+    findByDepartment(user) {
+        return this.noveltiesService.findByDepartment(user.id_departamento);
     }
-    update(id, dto) {
-        return this.noveltiesService.update(id, dto);
+    findOne(id, caller) {
+        return this.noveltiesService.findOne(id, caller);
     }
-    remove(id) {
-        return this.noveltiesService.remove(id);
+    update(id, dto, caller) {
+        return this.noveltiesService.update(id, dto, caller);
+    }
+    remove(id, caller) {
+        return this.noveltiesService.remove(id, caller);
     }
 };
 exports.NoveltiesController = NoveltiesController;
 __decorate([
     (0, common_1.Post)(),
     (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM),
-    (0, swagger_1.ApiOperation)({ summary: '[ADM] Registrar novedad de colaborador' }),
+    (0, swagger_1.ApiOperation)({ summary: '[ADM Global] Cualquier usuario · [ADM Depto] Solo su departamento' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -61,17 +64,18 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM),
-    (0, swagger_1.ApiOperation)({ summary: '[ADM] Listar novedades con filtros opcionales' }),
+    (0, swagger_1.ApiOperation)({ summary: '[ADM Global] Todas · [ADM Depto] Solo su departamento' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, example: 1 }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, example: 20 }),
     (0, swagger_1.ApiQuery)({ name: 'tipo', required: false, example: 'Vacaciones' }),
     (0, swagger_1.ApiQuery)({ name: 'id_usuario', required: false, example: 5 }),
-    __param(0, (0, common_1.Query)('page')),
-    __param(1, (0, common_1.Query)('limit')),
-    __param(2, (0, common_1.Query)('tipo')),
-    __param(3, (0, common_1.Query)('id_usuario')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
+    __param(3, (0, common_1.Query)('tipo')),
+    __param(4, (0, common_1.Query)('id_usuario')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], NoveltiesController.prototype, "findAll", null);
 __decorate([
@@ -84,31 +88,43 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], NoveltiesController.prototype, "findTeam", null);
 __decorate([
+    (0, common_1.Get)('department'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM),
+    (0, swagger_1.ApiOperation)({ summary: '[ADM] Ver novedades activas de su departamento' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], NoveltiesController.prototype, "findByDepartment", null);
+__decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM, role_enum_1.Rol.MOD),
-    (0, swagger_1.ApiOperation)({ summary: '[ADM, MOD] Ver detalle de novedad' }),
+    (0, swagger_1.ApiOperation)({ summary: '[ADM] Solo su depto · [MOD] Cualquier novedad' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", void 0)
 ], NoveltiesController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM),
-    (0, swagger_1.ApiOperation)({ summary: '[ADM] Actualizar novedad (solo si fecha_inicio > hoy)' }),
+    (0, swagger_1.ApiOperation)({ summary: '[ADM Global] Cualquier novedad · [ADM Depto] Solo su departamento' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, update_novelty_dto_1.UpdateNoveltyDto]),
+    __metadata("design:paramtypes", [Number, update_novelty_dto_1.UpdateNoveltyDto, Object]),
     __metadata("design:returntype", void 0)
 ], NoveltiesController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM),
-    (0, swagger_1.ApiOperation)({ summary: '[ADM] Eliminar novedad (soft delete → estado Eliminada)' }),
+    (0, swagger_1.ApiOperation)({ summary: '[ADM Global] Cualquier novedad · [ADM Depto] Solo su departamento' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", void 0)
 ], NoveltiesController.prototype, "remove", null);
 exports.NoveltiesController = NoveltiesController = __decorate([

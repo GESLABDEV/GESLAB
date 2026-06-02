@@ -14,11 +14,12 @@ import {
   ApiOperation,
   ApiQuery,
   ApiTags,
-} from '@nestjs/swagger'; 
+} from '@nestjs/swagger';
 import { Rol } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator'; // ✅ SC
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -30,65 +31,80 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // POST /users — Solo SA y ADM
+  // POST /users — SA y ADM
   @Post()
   @Roles(Rol.SA, Rol.ADM)
-  @ApiOperation({ summary: 'Crear un nuevo usuario (Solo SA)' })
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
+  @ApiOperation({ summary: '[SA, ADM] Crear un nuevo usuario' })
+  create(
+    @Body() dto: CreateUserDto,
+    @CurrentUser() caller: any, // ✅ SC
+  ) {
+    return this.usersService.create(dto, caller);
   }
 
-  // GET /users — Solo SA y ADM, con paginación y búsqueda
+  // GET /users — SA y ADM
   @Get()
   @Roles(Rol.SA, Rol.ADM)
-  @ApiOperation({ summary: 'Listar todos los usuarios paginados (Solo SA)' })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 20 })
+  @ApiOperation({ summary: '[SA] Todos los usuarios · [ADM] Solo su departamento' })
+  @ApiQuery({ name: 'page',   required: false, example: 1 })
+  @ApiQuery({ name: 'limit',  required: false, example: 20 })
   @ApiQuery({ name: 'search', required: false, example: 'daniel' })
   findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @CurrentUser() caller: any, // ✅ SC
+    @Query('page')   page?:   string,
+    @Query('limit')  limit?:  string,
     @Query('search') search?: string,
   ) {
     return this.usersService.findAll(
-      page ? parseInt(page) : 1,
+      caller,
+      page  ? parseInt(page)  : 1,
       limit ? parseInt(limit) : 20,
       search,
     );
   }
 
-  // GET /users/:id — SA y ADM
-  @Get(':id')
-  @Roles(Rol.SA, Rol.ADM)
-  @ApiOperation({ summary: 'Ver usuario por ID (SA y ADM)' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
-  }
+// GET /users/:id — SA y ADM
+@Get(':id')
+@Roles(Rol.SA, Rol.ADM)
+@ApiOperation({ summary: '[SA] Cualquier usuario · [ADM] Solo su departamento' })
+findOne(
+  @Param('id', ParseIntPipe) id: number,
+  @CurrentUser() caller: any, // ✅ SC
+) {
+  return this.usersService.findOne(id, caller);
+}
 
   // PATCH /users/:id — SA y ADM
   @Patch(':id')
   @Roles(Rol.SA, Rol.ADM)
-  @ApiOperation({ summary: 'Actualizar datos de usuario (SA y ADM)' })
+  @ApiOperation({ summary: '[SA] Cualquier usuario · [ADM] Solo su departamento' })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
+    @CurrentUser() caller: any, // ✅ SC
   ) {
-    return this.usersService.update(id, dto);
+    return this.usersService.update(id, dto, caller);
   }
 
-  // PATCH /users/:id/deactivate — Solo SA
+  // PATCH /users/:id/deactivate — SA y ADM
   @Patch(':id/deactivate')
-  @Roles(Rol.SA)
-  @ApiOperation({ summary: 'Desactivar usuario — soft delete (Solo SA)' })
-  deactivate(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.deactivate(id);
+  @Roles(Rol.SA, Rol.ADM) // ✅ SC — ADM puede desactivar usuarios de su depto
+  @ApiOperation({ summary: '[SA] Cualquier usuario · [ADM] Solo su departamento' })
+  deactivate(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() caller: any, // ✅ SC
+  ) {
+    return this.usersService.deactivate(id, caller);
   }
 
-  // PATCH /users/:id/activate — Solo SA
-@Patch(':id/activate')
-@Roles(Rol.SA)
-@ApiOperation({ summary: 'Reactivar usuario desactivado (Solo SA)' })
-activate(@Param('id', ParseIntPipe) id: number) {
-  return this.usersService.activate(id);
-}
+  // PATCH /users/:id/activate — SA y ADM
+  @Patch(':id/activate')
+  @Roles(Rol.SA, Rol.ADM) // ✅ SC — ADM puede reactivar usuarios de su depto
+  @ApiOperation({ summary: '[SA] Cualquier usuario · [ADM] Solo su departamento' })
+  activate(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() caller: any, // ✅ SC
+  ) {
+    return this.usersService.activate(id, caller);
+  }
 }

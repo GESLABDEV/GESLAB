@@ -19,6 +19,7 @@ const client_1 = require("@prisma/client");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const roles_guard_1 = require("../common/guards/roles.guard");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
+const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const users_service_1 = require("./users.service");
 const create_user_dto_1 = require("./dto/create-user.dto");
 const update_user_dto_1 = require("./dto/update-user.dto");
@@ -27,84 +28,90 @@ let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
     }
-    create(dto) {
-        return this.usersService.create(dto);
+    create(dto, caller) {
+        return this.usersService.create(dto, caller);
     }
-    findAll(page, limit, search) {
-        return this.usersService.findAll(page ? parseInt(page) : 1, limit ? parseInt(limit) : 20, search);
+    findAll(caller, page, limit, search) {
+        return this.usersService.findAll(caller, page ? parseInt(page) : 1, limit ? parseInt(limit) : 20, search);
     }
-    findOne(id) {
-        return this.usersService.findOne(id);
+    findOne(id, caller) {
+        return this.usersService.findOne(id, caller);
     }
-    update(id, dto) {
-        return this.usersService.update(id, dto);
+    update(id, dto, caller) {
+        return this.usersService.update(id, dto, caller);
     }
-    deactivate(id) {
-        return this.usersService.deactivate(id);
+    deactivate(id, caller) {
+        return this.usersService.deactivate(id, caller);
     }
-    activate(id) {
-        return this.usersService.activate(id);
+    activate(id, caller) {
+        return this.usersService.activate(id, caller);
     }
 };
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Post)(),
     (0, roles_decorator_1.Roles)(client_1.Rol.SA, client_1.Rol.ADM),
-    (0, swagger_1.ApiOperation)({ summary: 'Crear un nuevo usuario (Solo SA)' }),
+    (0, swagger_1.ApiOperation)({ summary: '[SA, ADM] Crear un nuevo usuario' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto]),
+    __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)(client_1.Rol.SA, client_1.Rol.ADM),
-    (0, swagger_1.ApiOperation)({ summary: 'Listar todos los usuarios paginados (Solo SA)' }),
+    (0, swagger_1.ApiOperation)({ summary: '[SA] Todos los usuarios · [ADM] Solo su departamento' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, example: 1 }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, example: 20 }),
     (0, swagger_1.ApiQuery)({ name: 'search', required: false, example: 'daniel' }),
-    __param(0, (0, common_1.Query)('page')),
-    __param(1, (0, common_1.Query)('limit')),
-    __param(2, (0, common_1.Query)('search')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
+    __param(3, (0, common_1.Query)('search')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)(client_1.Rol.SA, client_1.Rol.ADM),
-    (0, swagger_1.ApiOperation)({ summary: 'Ver usuario por ID (SA y ADM)' }),
+    (0, swagger_1.ApiOperation)({ summary: '[SA] Cualquier usuario · [ADM] Solo su departamento' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, roles_decorator_1.Roles)(client_1.Rol.SA, client_1.Rol.ADM),
-    (0, swagger_1.ApiOperation)({ summary: 'Actualizar datos de usuario (SA y ADM)' }),
+    (0, swagger_1.ApiOperation)({ summary: '[SA] Cualquier usuario · [ADM] Solo su departamento' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, update_user_dto_1.UpdateUserDto]),
+    __metadata("design:paramtypes", [Number, update_user_dto_1.UpdateUserDto, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "update", null);
 __decorate([
     (0, common_1.Patch)(':id/deactivate'),
-    (0, roles_decorator_1.Roles)(client_1.Rol.SA),
-    (0, swagger_1.ApiOperation)({ summary: 'Desactivar usuario — soft delete (Solo SA)' }),
+    (0, roles_decorator_1.Roles)(client_1.Rol.SA, client_1.Rol.ADM),
+    (0, swagger_1.ApiOperation)({ summary: '[SA] Cualquier usuario · [ADM] Solo su departamento' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "deactivate", null);
 __decorate([
     (0, common_1.Patch)(':id/activate'),
-    (0, roles_decorator_1.Roles)(client_1.Rol.SA),
-    (0, swagger_1.ApiOperation)({ summary: 'Reactivar usuario desactivado (Solo SA)' }),
+    (0, roles_decorator_1.Roles)(client_1.Rol.SA, client_1.Rol.ADM),
+    (0, swagger_1.ApiOperation)({ summary: '[SA] Cualquier usuario · [ADM] Solo su departamento' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "activate", null);
 exports.UsersController = UsersController = __decorate([

@@ -124,6 +124,7 @@ model Usuario {
   rol             Rol
   disponible      Boolean  @default(true)
   activo          Boolean  @default(true)
+  acceso_global   Boolean @default(false)
   creado_en       DateTime @default(now())
   actualizado_en  DateTime @updatedAt
 

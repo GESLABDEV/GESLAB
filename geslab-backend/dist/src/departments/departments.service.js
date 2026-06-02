@@ -13,10 +13,46 @@ exports.DepartmentsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const paginated_response_interface_1 = require("../common/interfaces/paginated-response.interface");
+const client_1 = require("@prisma/client");
+const ADMIN_SELECT = {
+    id_usuario: true,
+    nombre: true,
+    email: true,
+    rol: true,
+};
 let DepartmentsService = class DepartmentsService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
+    }
+    async validarAdministrador(id_administrador, excludeDeptoId) {
+        const admin = await this.prisma.usuario.findUnique({
+            where: { id_usuario: id_administrador },
+            select: { id_usuario: true, nombre: true, rol: true, activo: true },
+        });
+        if (!admin) {
+            throw new common_1.NotFoundException(`Usuario con ID ${id_administrador} no encontrado.`);
+        }
+        if (admin.rol !== client_1.Rol.ADM) {
+            throw new common_1.BadRequestException(`El administrador del departamento debe tener rol ADM. ` +
+                `El usuario seleccionado tiene rol ${admin.rol}.`);
+        }
+        if (!admin.activo) {
+            throw new common_1.BadRequestException(`El usuario ${admin.nombre} está inactivo y no puede ser asignado como administrador.`);
+        }
+        const deptoExistente = await this.prisma.departamento.findFirst({
+            where: {
+                id_administrador,
+                ...(excludeDeptoId && {
+                    NOT: { id_departamento: excludeDeptoId },
+                }),
+            },
+            select: { id_departamento: true, nombre: true },
+        });
+        if (deptoExistente) {
+            throw new common_1.ConflictException(`${admin.nombre} ya administra el departamento "${deptoExistente.nombre}". ` +
+                `Un ADM solo puede administrar un departamento.`);
+        }
     }
     async findAll(dto) {
         const { page = 1, limit = 20, search } = dto;
@@ -28,6 +64,7 @@ let DepartmentsService = class DepartmentsService {
             this.prisma.departamento.findMany({
                 where,
                 include: {
+                    administrador: { select: ADMIN_SELECT },
                     usuarios: {
                         where: { activo: true },
                         select: { id_usuario: true, nombre: true, email: true, rol: true },
@@ -44,6 +81,7 @@ let DepartmentsService = class DepartmentsService {
         const dept = await this.prisma.departamento.findUnique({
             where: { id_departamento: id },
             include: {
+                administrador: { select: ADMIN_SELECT },
                 usuarios: {
                     where: { activo: true },
                     select: { id_usuario: true, nombre: true, email: true, rol: true },
@@ -55,13 +93,33 @@ let DepartmentsService = class DepartmentsService {
         return dept;
     }
     async create(dto) {
-        return this.prisma.departamento.create({ data: { nombre: dto.nombre } });
+        if (dto.id_administrador) {
+            await this.validarAdministrador(dto.id_administrador);
+        }
+        return this.prisma.departamento.create({
+            data: {
+                nombre: dto.nombre,
+                ...(dto.id_administrador && { id_administrador: dto.id_administrador }),
+            },
+            include: {
+                administrador: { select: ADMIN_SELECT },
+            },
+        });
     }
     async update(id, dto) {
         await this.findOne(id);
+        if (dto.id_administrador !== undefined && dto.id_administrador !== null) {
+            await this.validarAdministrador(dto.id_administrador, id);
+        }
         return this.prisma.departamento.update({
             where: { id_departamento: id },
-            data: { nombre: dto.nombre },
+            data: {
+                ...(dto.nombre && { nombre: dto.nombre }),
+                ...(dto.id_administrador !== undefined && { id_administrador: dto.id_administrador }),
+            },
+            include: {
+                administrador: { select: ADMIN_SELECT },
+            },
         });
     }
     async remove(id) {
