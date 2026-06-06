@@ -10,9 +10,48 @@ import { ReviewRequestDto } from './dto/review-request.dto';
 import { DecideRequestDto } from './dto/decide-request.dto';
 import { Rol } from '@prisma/client';
 
+// ✅ SC — Tipo del caller inyectado desde @CurrentUser()
+interface Caller {
+  id_usuario:      number;
+  rol:             Rol;
+  acceso_global:   boolean;
+  id_departamento: number | null;
+  id_moderador:    number | null;
+}
+
 @Injectable()
 export class RequestsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // ─── HELPER SC: validar que el solicitante pertenece al depto del caller ──
+  private async validarScopeSolicitud(
+    id_solicitud: number,
+    caller: Caller,
+  ): Promise<void> {
+    if (caller.rol === Rol.SA)  return;
+    if (caller.acceso_global)   return;
+
+    if (!caller.id_departamento) {
+      throw new BadRequestException(
+        'No tienes un departamento asignado. Contacta al SA.',
+      );
+    }
+
+    const solicitud = await this.prisma.solicitud.findUnique({
+      where:   { id_solicitud },
+      select:  { solicitante: { select: { id_departamento: true } } },
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException(`Solicitud ${id_solicitud} no encontrada.`);
+    }
+
+    if (solicitud.solicitante.id_departamento !== caller.id_departamento) {
+      throw new ForbiddenException(
+        'No puedes gestionar solicitudes fuera de tu departamento.',
+      );
+    }
+  }
 
   // ─── CREAR — Flujos A (AGE), B (MOD), C (ADM) ─────────────
   async create(dto: CreateRequestDto, solicitante: any) {
@@ -43,17 +82,30 @@ export class RequestsService {
 
   // ─── LISTAR TODAS (ADM / SA) ───────────────────────────────
   async findAll(
-    page = 1,
-    limit = 20,
-    tipo?: string,
-    estado?: string,
+    caller: Caller,
+    page    = 1,
+    limit   = 20,
+    tipo?:      string,
+    estado?:    string,
     id_usuario?: number,
   ) {
     const skip = (page - 1) * limit;
-    const where: any = {};
-    if (tipo)       where.tipo            = tipo;
-    if (estado)     where.estado          = estado;
-    if (id_usuario) where.id_solicitante  = id_usuario;
+
+    // ✅ SC — ADM sin acceso global solo ve solicitudes de su depto
+    const scopeWhere: any = {};
+    if (caller.rol === Rol.ADM && !caller.acceso_global) {
+      if (!caller.id_departamento) {
+        throw new BadRequestException(
+          'No tienes un departamento asignado. Contacta al SA.',
+        );
+      }
+      scopeWhere.solicitante = { id_departamento: caller.id_departamento };
+    }
+
+    const where: any = { ...scopeWhere };
+    if (tipo)       where.tipo           = tipo;
+    if (estado)     where.estado         = estado;
+    if (id_usuario) where.id_solicitante = id_usuario;
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.solicitud.findMany({
@@ -75,7 +127,7 @@ export class RequestsService {
 
   // ─── MIS SOLICITUDES (AGE / MOD / ADM) ────────────────────
   async findMy(userId: number, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
+    const skip  = (page - 1) * limit;
     const where = { id_solicitante: userId };
 
     const [data, total] = await this.prisma.$transaction([
@@ -106,11 +158,15 @@ export class RequestsService {
   }
 
   // ─── VER DETALLE ───────────────────────────────────────────
-  async findOne(id: number, usuario: any) {
+async findOne(id: number, caller: any) {
+  console.log('[findOne] caller.rol:', caller.rol, '| tipo:', typeof caller.rol);
+  console.log('[findOne] Rol.AGE:', Rol.AGE, '| iguales:', caller.rol === Rol.AGE);
+  // ... resto del método
+    // ✅ SC — AGE solo ve las suyas (comportamiento original)
     const solicitud = await this.prisma.solicitud.findUnique({
       where: { id_solicitud: id },
       include: {
-        solicitante:       { select: { id_usuario: true, nombre: true, rol: true } },
+        solicitante:       { select: { id_usuario: true, nombre: true, rol: true, id_departamento: true } },
         revisor_moderador: { select: { id_usuario: true, nombre: true } },
         aprobador:         { select: { id_usuario: true, nombre: true } },
       },
@@ -118,11 +174,18 @@ export class RequestsService {
 
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada.`);
 
-    if (
-      usuario.rol === Rol.AGE &&
-      solicitud.id_solicitante !== usuario.id_usuario
-    ) {
+    // AGE — solo las suyas
+    if (caller.rol === Rol.AGE && solicitud.id_solicitante !== caller.id_usuario) {
       throw new ForbiddenException('Solo puedes ver tus propias solicitudes.');
+    }
+
+    // ✅ SC — ADM sin acceso global solo ve solicitudes de su depto
+    if (caller.rol === Rol.ADM && !caller.acceso_global) {
+      if (solicitud.solicitante.id_departamento !== caller.id_departamento) {
+        throw new ForbiddenException(
+          'No puedes ver solicitudes fuera de tu departamento.',
+        );
+      }
     }
 
     return solicitud;
@@ -156,7 +219,10 @@ export class RequestsService {
   }
 
   // ─── DECIDIR (ADM / SA) → Aprobada | Rechazada ────────────
-  async decide(id: number, dto: DecideRequestDto, decisor: any) {
+  async decide(id: number, dto: DecideRequestDto, decisor: Caller) {
+    // ✅ SC — ADM sin acceso global solo decide sobre su depto
+    await this.validarScopeSolicitud(id, decisor);
+
     const solicitud = await this.prisma.solicitud.findUnique({
       where: { id_solicitud: id },
     });
@@ -179,7 +245,6 @@ export class RequestsService {
       );
     }
 
-    // dto.comentario ya viene validado por el DTO (obligatorio, solo letras)
     return this.prisma.solicitud.update({
       where: { id_solicitud: id },
       data: {
@@ -189,4 +254,36 @@ export class RequestsService {
       },
     });
   }
+
+  async findPendingMod(caller: Caller) {
+  // Scope: ADM depto filtra por su departamento
+  const solicitanteWhere: any = { rol: Rol.MOD };
+  if (caller.rol === Rol.ADM && !caller.acceso_global) {
+    if (!caller.id_departamento) {
+      throw new BadRequestException(
+        'No tienes un departamento asignado. Contacta al SA.',
+      );
+    }
+    solicitanteWhere.id_departamento = caller.id_departamento;
+  }
+
+  return this.prisma.solicitud.findMany({
+    where: {
+      estado:               'Pendiente',
+      id_revisor_moderador: null,       // solo Flujo B
+      solicitante:          solicitanteWhere,
+    },
+    orderBy: { fecha_solicitud: 'asc' },
+    include: {
+      solicitante: {
+        select: {
+          id_usuario:      true,
+          nombre:          true,
+          email:           true,
+          id_departamento: true,
+        },
+      },
+    },
+  });
+}
 }

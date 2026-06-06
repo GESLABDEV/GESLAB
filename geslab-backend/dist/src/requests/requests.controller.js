@@ -32,8 +32,8 @@ let RequestsController = class RequestsController {
     create(dto, user) {
         return this.requestsService.create(dto, user);
     }
-    findAll(page, limit, tipo, estado, id_usuario) {
-        return this.requestsService.findAll(page ? parseInt(page) : 1, limit ? parseInt(limit) : 20, tipo, estado, id_usuario ? parseInt(id_usuario) : undefined);
+    findAll(caller, page, limit, tipo, estado, id_usuario) {
+        return this.requestsService.findAll(caller, page ? parseInt(page) : 1, limit ? parseInt(limit) : 20, tipo, estado, id_usuario ? parseInt(id_usuario) : undefined);
     }
     findMy(user, page, limit) {
         return this.requestsService.findMy(user.id_usuario, page ? parseInt(page) : 1, limit ? parseInt(limit) : 20);
@@ -41,14 +41,17 @@ let RequestsController = class RequestsController {
     findPendingReview(user) {
         return this.requestsService.findPendingReview(user.id_usuario);
     }
-    findOne(id, user) {
-        return this.requestsService.findOne(id, user);
+    findPendingMod(caller) {
+        return this.requestsService.findPendingMod(caller);
+    }
+    findOne(id, caller) {
+        return this.requestsService.findOne(id, caller);
     }
     review(id, dto, user) {
         return this.requestsService.review(id, dto, user);
     }
-    decide(id, dto, user) {
-        return this.requestsService.decide(id, dto, user);
+    decide(id, dto, caller) {
+        return this.requestsService.decide(id, dto, caller);
     }
 };
 exports.RequestsController = RequestsController;
@@ -67,19 +70,20 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM, role_enum_1.Rol.SA),
-    (0, swagger_1.ApiOperation)({ summary: '[ADM/SA] Listar todas las solicitudes con filtros' }),
+    (0, swagger_1.ApiOperation)({ summary: '[SA/ADM Global] Todas · [ADM Depto] Solo su departamento' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, example: 1 }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, example: 20 }),
     (0, swagger_1.ApiQuery)({ name: 'tipo', required: false, example: 'CambioDeTurno' }),
     (0, swagger_1.ApiQuery)({ name: 'estado', required: false, example: 'Pendiente' }),
     (0, swagger_1.ApiQuery)({ name: 'id_usuario', required: false, example: 5 }),
-    __param(0, (0, common_1.Query)('page')),
-    __param(1, (0, common_1.Query)('limit')),
-    __param(2, (0, common_1.Query)('tipo')),
-    __param(3, (0, common_1.Query)('estado')),
-    __param(4, (0, common_1.Query)('id_usuario')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
+    __param(3, (0, common_1.Query)('tipo')),
+    __param(4, (0, common_1.Query)('estado')),
+    __param(5, (0, common_1.Query)('id_usuario')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], RequestsController.prototype, "findAll", null);
 __decorate([
@@ -103,9 +107,20 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], RequestsController.prototype, "findPendingReview", null);
 __decorate([
+    (0, common_1.Get)('pending-mod'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM, role_enum_1.Rol.SA),
+    (0, swagger_1.ApiOperation)({
+        summary: '[SA/ADM Global] Todas las solicitudes MOD pendientes · [ADM Depto] Solo su departamento',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], RequestsController.prototype, "findPendingMod", null);
+__decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM, role_enum_1.Rol.SA, role_enum_1.Rol.MOD, role_enum_1.Rol.AGE),
-    (0, swagger_1.ApiOperation)({ summary: '[ADM/SA/MOD/AGE] Ver detalle — AGE solo las suyas' }),
+    (0, swagger_1.ApiOperation)({ summary: '[SA/ADM Global] Cualquiera · [ADM Depto] Su depto · [AGE] Solo las suyas' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -128,9 +143,7 @@ __decorate([
 __decorate([
     (0, common_1.Patch)(':id/decide'),
     (0, roles_decorator_1.Roles)(role_enum_1.Rol.ADM, role_enum_1.Rol.SA),
-    (0, swagger_1.ApiOperation)({
-        summary: '[ADM/SA] Decisión final — Aprobada o Rechazada (Flujos A, B, C)',
-    }),
+    (0, swagger_1.ApiOperation)({ summary: '[SA/ADM Global] Cualquier solicitud · [ADM Depto] Solo su departamento' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
