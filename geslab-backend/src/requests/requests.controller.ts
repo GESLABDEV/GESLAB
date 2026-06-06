@@ -42,16 +42,17 @@ export class RequestsController {
     return this.requestsService.create(dto, user);
   }
 
-  // GET /requests — ADM y SA ven todas
+  // GET /requests — ADM y SA ven solicitudes
   @Get()
   @Roles(Rol.ADM, Rol.SA)
-  @ApiOperation({ summary: '[ADM/SA] Listar todas las solicitudes con filtros' })
+  @ApiOperation({ summary: '[SA/ADM Global] Todas · [ADM Depto] Solo su departamento' })
   @ApiQuery({ name: 'page',       required: false, example: 1 })
   @ApiQuery({ name: 'limit',      required: false, example: 20 })
   @ApiQuery({ name: 'tipo',       required: false, example: 'CambioDeTurno' })
   @ApiQuery({ name: 'estado',     required: false, example: 'Pendiente' })
   @ApiQuery({ name: 'id_usuario', required: false, example: 5 })
   findAll(
+    @CurrentUser() caller: any, // ✅ SC
     @Query('page')       page?: string,
     @Query('limit')      limit?: string,
     @Query('tipo')       tipo?: string,
@@ -59,6 +60,7 @@ export class RequestsController {
     @Query('id_usuario') id_usuario?: string,
   ) {
     return this.requestsService.findAll(
+      caller,
       page       ? parseInt(page)       : 1,
       limit      ? parseInt(limit)      : 20,
       tipo,
@@ -66,6 +68,7 @@ export class RequestsController {
       id_usuario ? parseInt(id_usuario) : undefined,
     );
   }
+
 
   // GET /requests/my — AGE, MOD, ADM ven las suyas
   @Get('my')
@@ -91,15 +94,25 @@ export class RequestsController {
     return this.requestsService.findPendingReview(user.id_usuario);
   }
 
+// GET /requests/pending-mod — ADM ve solicitudes Pendientes de MODs de su depto
+@Get('pending-mod')
+@Roles(Rol.ADM, Rol.SA)
+@ApiOperation({
+  summary: '[SA/ADM Global] Todas las solicitudes MOD pendientes · [ADM Depto] Solo su departamento',
+})
+findPendingMod(@CurrentUser() caller: any) {
+  return this.requestsService.findPendingMod(caller);
+}
+
   // GET /requests/:id — detalle con control de visibilidad
   @Get(':id')
   @Roles(Rol.ADM, Rol.SA, Rol.MOD, Rol.AGE)
-  @ApiOperation({ summary: '[ADM/SA/MOD/AGE] Ver detalle — AGE solo las suyas' })
+  @ApiOperation({ summary: '[SA/ADM Global] Cualquiera · [ADM Depto] Su depto · [AGE] Solo las suyas' })
   findOne(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: any,
+    @CurrentUser() caller: any, // ✅ SC — ya existía como user, mismo parámetro
   ) {
-    return this.requestsService.findOne(id, user);
+    return this.requestsService.findOne(id, caller);
   }
 
   // PATCH /requests/:id/review — MOD revisa
@@ -119,14 +132,12 @@ export class RequestsController {
   // PATCH /requests/:id/decide — ADM / SA decide
   @Patch(':id/decide')
   @Roles(Rol.ADM, Rol.SA)
-  @ApiOperation({
-    summary: '[ADM/SA] Decisión final — Aprobada o Rechazada (Flujos A, B, C)',
-  })
+  @ApiOperation({ summary: '[SA/ADM Global] Cualquier solicitud · [ADM Depto] Solo su departamento' })
   decide(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: DecideRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser() caller: any, // ✅ SC — renombrado de user a caller
   ) {
-    return this.requestsService.decide(id, dto, user);
+    return this.requestsService.decide(id, dto, caller);
   }
 }

@@ -18,6 +18,25 @@ let RequestsService = class RequestsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async validarScopeSolicitud(id_solicitud, caller) {
+        if (caller.rol === client_1.Rol.SA)
+            return;
+        if (caller.acceso_global)
+            return;
+        if (!caller.id_departamento) {
+            throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+        }
+        const solicitud = await this.prisma.solicitud.findUnique({
+            where: { id_solicitud },
+            select: { solicitante: { select: { id_departamento: true } } },
+        });
+        if (!solicitud) {
+            throw new common_1.NotFoundException(`Solicitud ${id_solicitud} no encontrada.`);
+        }
+        if (solicitud.solicitante.id_departamento !== caller.id_departamento) {
+            throw new common_1.ForbiddenException('No puedes gestionar solicitudes fuera de tu departamento.');
+        }
+    }
     async create(dto, solicitante) {
         const { id_usuario, rol, id_moderador } = solicitante;
         let id_revisor_moderador = null;
@@ -38,9 +57,16 @@ let RequestsService = class RequestsService {
             },
         });
     }
-    async findAll(page = 1, limit = 20, tipo, estado, id_usuario) {
+    async findAll(caller, page = 1, limit = 20, tipo, estado, id_usuario) {
         const skip = (page - 1) * limit;
-        const where = {};
+        const scopeWhere = {};
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            if (!caller.id_departamento) {
+                throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+            }
+            scopeWhere.solicitante = { id_departamento: caller.id_departamento };
+        }
+        const where = { ...scopeWhere };
         if (tipo)
             where.tipo = tipo;
         if (estado)
@@ -89,20 +115,26 @@ let RequestsService = class RequestsService {
             },
         });
     }
-    async findOne(id, usuario) {
+    async findOne(id, caller) {
+        console.log('[findOne] caller.rol:', caller.rol, '| tipo:', typeof caller.rol);
+        console.log('[findOne] Rol.AGE:', client_1.Rol.AGE, '| iguales:', caller.rol === client_1.Rol.AGE);
         const solicitud = await this.prisma.solicitud.findUnique({
             where: { id_solicitud: id },
             include: {
-                solicitante: { select: { id_usuario: true, nombre: true, rol: true } },
+                solicitante: { select: { id_usuario: true, nombre: true, rol: true, id_departamento: true } },
                 revisor_moderador: { select: { id_usuario: true, nombre: true } },
                 aprobador: { select: { id_usuario: true, nombre: true } },
             },
         });
         if (!solicitud)
             throw new common_1.NotFoundException(`Solicitud ${id} no encontrada.`);
-        if (usuario.rol === client_1.Rol.AGE &&
-            solicitud.id_solicitante !== usuario.id_usuario) {
+        if (caller.rol === client_1.Rol.AGE && solicitud.id_solicitante !== caller.id_usuario) {
             throw new common_1.ForbiddenException('Solo puedes ver tus propias solicitudes.');
+        }
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            if (solicitud.solicitante.id_departamento !== caller.id_departamento) {
+                throw new common_1.ForbiddenException('No puedes ver solicitudes fuera de tu departamento.');
+            }
         }
         return solicitud;
     }
@@ -127,6 +159,7 @@ let RequestsService = class RequestsService {
         });
     }
     async decide(id, dto, decisor) {
+        await this.validarScopeSolicitud(id, decisor);
         const solicitud = await this.prisma.solicitud.findUnique({
             where: { id_solicitud: id },
         });
@@ -145,6 +178,33 @@ let RequestsService = class RequestsService {
                 estado: dto.estado,
                 comentario: dto.comentario,
                 id_aprobador: decisor.id_usuario,
+            },
+        });
+    }
+    async findPendingMod(caller) {
+        const solicitanteWhere = { rol: client_1.Rol.MOD };
+        if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
+            if (!caller.id_departamento) {
+                throw new common_1.BadRequestException('No tienes un departamento asignado. Contacta al SA.');
+            }
+            solicitanteWhere.id_departamento = caller.id_departamento;
+        }
+        return this.prisma.solicitud.findMany({
+            where: {
+                estado: 'Pendiente',
+                id_revisor_moderador: null,
+                solicitante: solicitanteWhere,
+            },
+            orderBy: { fecha_solicitud: 'asc' },
+            include: {
+                solicitante: {
+                    select: {
+                        id_usuario: true,
+                        nombre: true,
+                        email: true,
+                        id_departamento: true,
+                    },
+                },
             },
         });
     }
