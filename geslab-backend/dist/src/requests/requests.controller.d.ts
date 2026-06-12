@@ -7,15 +7,15 @@ export declare class RequestsController {
     constructor(requestsService: RequestsService);
     create(dto: CreateRequestDto, user: any): Promise<{
         tipo: import("@prisma/client").$Enums.TipoSolicitud;
-        estado: import("@prisma/client").$Enums.EstadoSolicitud;
         descripcion: string;
+        fecha_solicitud: Date;
+        estado: import("@prisma/client").$Enums.EstadoSolicitud;
+        comentario: string | null;
+        comentario_moderador: string | null;
         soporte_url: string | null;
+        id_solicitud: number;
         id_solicitante: number;
         id_revisor_moderador: number | null;
-        comentario_moderador: string | null;
-        comentario: string | null;
-        id_solicitud: number;
-        fecha_solicitud: Date;
         id_aprobador: number | null;
     }>;
     findAll(caller: any, page?: string, limit?: string, tipo?: string, estado?: string, id_usuario?: string): Promise<{
@@ -35,15 +35,15 @@ export declare class RequestsController {
             } | null;
         } & {
             tipo: import("@prisma/client").$Enums.TipoSolicitud;
-            estado: import("@prisma/client").$Enums.EstadoSolicitud;
             descripcion: string;
+            fecha_solicitud: Date;
+            estado: import("@prisma/client").$Enums.EstadoSolicitud;
+            comentario: string | null;
+            comentario_moderador: string | null;
             soporte_url: string | null;
+            id_solicitud: number;
             id_solicitante: number;
             id_revisor_moderador: number | null;
-            comentario_moderador: string | null;
-            comentario: string | null;
-            id_solicitud: number;
-            fecha_solicitud: Date;
             id_aprobador: number | null;
         })[];
         total: number;
@@ -54,15 +54,15 @@ export declare class RequestsController {
     findMy(user: any, page?: string, limit?: string): Promise<{
         data: {
             tipo: import("@prisma/client").$Enums.TipoSolicitud;
-            estado: import("@prisma/client").$Enums.EstadoSolicitud;
             descripcion: string;
+            fecha_solicitud: Date;
+            estado: import("@prisma/client").$Enums.EstadoSolicitud;
+            comentario: string | null;
+            comentario_moderador: string | null;
             soporte_url: string | null;
+            id_solicitud: number;
             id_solicitante: number;
             id_revisor_moderador: number | null;
-            comentario_moderador: string | null;
-            comentario: string | null;
-            id_solicitud: number;
-            fecha_solicitud: Date;
             id_aprobador: number | null;
         }[];
         total: number;
@@ -73,40 +73,40 @@ export declare class RequestsController {
     findPendingReview(user: any): Promise<({
         solicitante: {
             id_usuario: number;
-            email: string;
             nombre: string;
+            email: string;
         };
     } & {
         tipo: import("@prisma/client").$Enums.TipoSolicitud;
-        estado: import("@prisma/client").$Enums.EstadoSolicitud;
         descripcion: string;
+        fecha_solicitud: Date;
+        estado: import("@prisma/client").$Enums.EstadoSolicitud;
+        comentario: string | null;
+        comentario_moderador: string | null;
         soporte_url: string | null;
+        id_solicitud: number;
         id_solicitante: number;
         id_revisor_moderador: number | null;
-        comentario_moderador: string | null;
-        comentario: string | null;
-        id_solicitud: number;
-        fecha_solicitud: Date;
         id_aprobador: number | null;
     })[]>;
     findPendingMod(caller: any): Promise<({
         solicitante: {
             id_usuario: number;
-            email: string;
             nombre: string;
+            email: string;
             id_departamento: number | null;
         };
     } & {
         tipo: import("@prisma/client").$Enums.TipoSolicitud;
-        estado: import("@prisma/client").$Enums.EstadoSolicitud;
         descripcion: string;
+        fecha_solicitud: Date;
+        estado: import("@prisma/client").$Enums.EstadoSolicitud;
+        comentario: string | null;
+        comentario_moderador: string | null;
         soporte_url: string | null;
+        id_solicitud: number;
         id_solicitante: number;
         id_revisor_moderador: number | null;
-        comentario_moderador: string | null;
-        comentario: string | null;
-        id_solicitud: number;
-        fecha_solicitud: Date;
         id_aprobador: number | null;
     })[]>;
     findOne(id: number, caller: any): Promise<{
@@ -126,41 +126,41 @@ export declare class RequestsController {
         } | null;
     } & {
         tipo: import("@prisma/client").$Enums.TipoSolicitud;
-        estado: import("@prisma/client").$Enums.EstadoSolicitud;
         descripcion: string;
+        fecha_solicitud: Date;
+        estado: import("@prisma/client").$Enums.EstadoSolicitud;
+        comentario: string | null;
+        comentario_moderador: string | null;
         soporte_url: string | null;
+        id_solicitud: number;
         id_solicitante: number;
         id_revisor_moderador: number | null;
-        comentario_moderador: string | null;
-        comentario: string | null;
-        id_solicitud: number;
-        fecha_solicitud: Date;
         id_aprobador: number | null;
     }>;
     review(id: number, dto: ReviewRequestDto, user: any): Promise<{
         tipo: import("@prisma/client").$Enums.TipoSolicitud;
-        estado: import("@prisma/client").$Enums.EstadoSolicitud;
         descripcion: string;
+        fecha_solicitud: Date;
+        estado: import("@prisma/client").$Enums.EstadoSolicitud;
+        comentario: string | null;
+        comentario_moderador: string | null;
         soporte_url: string | null;
+        id_solicitud: number;
         id_solicitante: number;
         id_revisor_moderador: number | null;
-        comentario_moderador: string | null;
-        comentario: string | null;
-        id_solicitud: number;
-        fecha_solicitud: Date;
         id_aprobador: number | null;
     }>;
     decide(id: number, dto: DecideRequestDto, caller: any): Promise<{
         tipo: import("@prisma/client").$Enums.TipoSolicitud;
-        estado: import("@prisma/client").$Enums.EstadoSolicitud;
         descripcion: string;
+        fecha_solicitud: Date;
+        estado: import("@prisma/client").$Enums.EstadoSolicitud;
+        comentario: string | null;
+        comentario_moderador: string | null;
         soporte_url: string | null;
+        id_solicitud: number;
         id_solicitante: number;
         id_revisor_moderador: number | null;
-        comentario_moderador: string | null;
-        comentario: string | null;
-        id_solicitud: number;
-        fecha_solicitud: Date;
         id_aprobador: number | null;
     }>;
 }

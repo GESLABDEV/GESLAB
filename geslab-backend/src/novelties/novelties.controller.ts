@@ -71,16 +71,16 @@ export class NoveltiesController {
   @Get('team')
   @Roles(Rol.MOD)
   @ApiOperation({ summary: '[MOD] Ver novedades activas de supervisados directos' })
-  findTeam(@CurrentUser() user: any) {
-    return this.noveltiesService.findTeam(user.id_usuario);
+  findTeam(@CurrentUser() caller: any) {
+    return this.noveltiesService.findTeam(caller.id_usuario);
   }
 
   // GET /novelties/department — ADM ve novedades de su departamento
   @Get('department')
   @Roles(Rol.ADM)
   @ApiOperation({ summary: '[ADM] Ver novedades activas de su departamento' })
-  findByDepartment(@CurrentUser() user: any) {
-    return this.noveltiesService.findByDepartment(user.id_departamento);
+  findByDepartment(@CurrentUser() caller: any) {
+  return this.noveltiesService.findByDepartment(caller.id_departamento);
   }
 
   // GET /novelties/:id — ADM y MOD

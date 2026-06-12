@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException, // ✅ SC
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -9,7 +9,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateNoveltyDto } from './dto/create-novelty.dto';
 import { UpdateNoveltyDto } from './dto/update-novelty.dto';
-import { Rol } from '@prisma/client'; // ✅ SC
+import { Rol, EstadoNovedad } from '@prisma/client';
 
 // ✅ SC — Tipo del caller inyectado desde @CurrentUser()
 interface Caller {
@@ -87,13 +87,14 @@ export class NoveltiesService {
   }
 
   // ─── CREATE ───────────────────────────────────────────────
-async create(dto: CreateNoveltyDto, caller: Caller) {
-  // ✅ RN-NOV-001 — Solo SA y ADM Global gestionan novedades directamente
-  if (caller.rol === Rol.ADM && !caller.acceso_global) {
-    throw new ForbiddenException(
-      'Solo el administrador global puede registrar novedades.',
-    );
-  }
+  async create(dto: CreateNoveltyDto, caller: Caller) {
+    // ✅ RN-NOV-001 — Solo SA y ADM Global gestionan novedades directamente
+    if (caller.rol === Rol.ADM && !caller.acceso_global) {
+      throw new ForbiddenException(
+        'Solo el administrador global puede registrar novedades.',
+      );
+    }
+
     await this.validarScopeUsuario(dto.id_usuario, caller);
 
     // 1. Verificar que el usuario afectado existe y está activo
@@ -113,7 +114,7 @@ async create(dto: CreateNoveltyDto, caller: Caller) {
     const overlap = await this.prisma.novedad.findFirst({
       where: {
         id_usuario: dto.id_usuario,
-        estado: { in: ['Registrada', 'Activa'] },
+        estado:     { in: [EstadoNovedad.Registrada, EstadoNovedad.Activa] },
         AND: [
           { fecha_inicio: { lte: new Date(dto.fecha_fin) } },
           { fecha_fin:    { gte: new Date(dto.fecha_inicio) } },
@@ -135,7 +136,7 @@ async create(dto: CreateNoveltyDto, caller: Caller) {
         descripcion:       dto.descripcion,
         soporte_url:       dto.soporte_url,
         id_usuario:        dto.id_usuario,
-        id_registrado_por: caller.id_usuario, // ✅ SC — viene del caller completo
+        id_registrado_por: caller.id_usuario,
       },
     });
   }
@@ -162,7 +163,7 @@ async create(dto: CreateNoveltyDto, caller: Caller) {
     }
 
     const where: any = {
-      NOT: { estado: 'Eliminada' },
+      NOT: { estado: EstadoNovedad.Eliminada },
       ...scopeAfectado,
     };
     if (tipo)       where.tipo       = tipo;
@@ -189,7 +190,7 @@ async create(dto: CreateNoveltyDto, caller: Caller) {
   async findTeam(moderadorId: number) {
     return this.prisma.novedad.findMany({
       where: {
-        estado:   { in: ['Registrada', 'Activa'] },
+        estado:   { in: [EstadoNovedad.Registrada, EstadoNovedad.Activa] },
         afectado: { id_moderador: moderadorId },
       },
       orderBy: { fecha_inicio: 'asc' },
@@ -220,13 +221,14 @@ async create(dto: CreateNoveltyDto, caller: Caller) {
   }
 
   // ─── UPDATE ───────────────────────────────────────────────
-async update(id: number, dto: UpdateNoveltyDto, caller: Caller) {
-  // ✅ RN-NOV-001
-  if (caller.rol === Rol.ADM && !caller.acceso_global) {
-    throw new ForbiddenException(
-      'Solo el administrador global puede modificar novedades.',
-    );
-  }
+  async update(id: number, dto: UpdateNoveltyDto, caller: Caller) {
+    // ✅ RN-NOV-001
+    if (caller.rol === Rol.ADM && !caller.acceso_global) {
+      throw new ForbiddenException(
+        'Solo el administrador global puede modificar novedades.',
+      );
+    }
+
     await this.validarScopeNovedad(id, caller);
 
     const novedad = await this.findOne(id); // sin caller — scope ya validado
@@ -247,32 +249,33 @@ async update(id: number, dto: UpdateNoveltyDto, caller: Caller) {
       data: {
         ...(dto.fecha_inicio && { fecha_inicio: new Date(dto.fecha_inicio) }),
         ...(dto.fecha_fin    && { fecha_fin:    new Date(dto.fecha_fin) }),
-        ...(dto.tipo        && { tipo:        dto.tipo }),
-        ...(dto.descripcion && { descripcion: dto.descripcion }),
+        ...(dto.tipo         && { tipo:         dto.tipo }),
+        ...(dto.descripcion  && { descripcion:  dto.descripcion }),
         ...(dto.soporte_url !== undefined && { soporte_url: dto.soporte_url }),
       },
     });
   }
 
   // ─── REMOVE (soft delete) ──────────────────────────────────
-async remove(id: number, caller: Caller) {
-  // ✅ RN-NOV-001
-  if (caller.rol === Rol.ADM && !caller.acceso_global) {
-    throw new ForbiddenException(
-      'Solo el administrador global puede eliminar novedades.',
-    );
-  }
+  async remove(id: number, caller: Caller) {
+    // ✅ RN-NOV-001
+    if (caller.rol === Rol.ADM && !caller.acceso_global) {
+      throw new ForbiddenException(
+        'Solo el administrador global puede eliminar novedades.',
+      );
+    }
+
     await this.validarScopeNovedad(id, caller);
 
     const novedad = await this.findOne(id); // sin caller — scope ya validado
 
-    if (novedad.estado === 'Eliminada') {
+    if (novedad.estado === EstadoNovedad.Eliminada) {
       throw new ConflictException('La novedad ya fue eliminada.');
     }
 
     return this.prisma.novedad.update({
       where: { id_novedad: id },
-      data:  { estado: 'Eliminada' },
+      data:  { estado: EstadoNovedad.Eliminada },
     });
   }
 
@@ -286,7 +289,7 @@ async remove(id: number, caller: Caller) {
 
     return this.prisma.novedad.findMany({
       where: {
-        estado:   { in: ['Registrada', 'Activa'] },
+        estado:   { in: [EstadoNovedad.Registrada, EstadoNovedad.Activa] },
         afectado: { id_departamento },
       },
       orderBy: { fecha_inicio: 'asc' },

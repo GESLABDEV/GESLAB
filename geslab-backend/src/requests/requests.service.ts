@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { ReviewRequestDto } from './dto/review-request.dto';
 import { DecideRequestDto } from './dto/decide-request.dto';
-import { Rol } from '@prisma/client';
+import { Rol, EstadoSolicitud } from '@prisma/client';
 
 // ✅ SC — Tipo del caller inyectado desde @CurrentUser()
 interface Caller {
@@ -38,8 +38,8 @@ export class RequestsService {
     }
 
     const solicitud = await this.prisma.solicitud.findUnique({
-      where:   { id_solicitud },
-      select:  { solicitante: { select: { id_departamento: true } } },
+      where:  { id_solicitud },
+      select: { solicitante: { select: { id_departamento: true } } },
     });
 
     if (!solicitud) {
@@ -75,7 +75,7 @@ export class RequestsService {
         soporte_url:         dto.soporte_url,
         id_solicitante:      id_usuario,
         id_revisor_moderador,
-        estado:              'Pendiente',
+        estado:              EstadoSolicitud.Pendiente,
       },
     });
   }
@@ -148,7 +148,7 @@ export class RequestsService {
     return this.prisma.solicitud.findMany({
       where: {
         id_revisor_moderador: moderadorId,
-        estado:               'Pendiente',
+        estado:               EstadoSolicitud.Pendiente,
       },
       orderBy: { fecha_solicitud: 'asc' },
       include: {
@@ -158,11 +158,7 @@ export class RequestsService {
   }
 
   // ─── VER DETALLE ───────────────────────────────────────────
-async findOne(id: number, caller: any) {
-  console.log('[findOne] caller.rol:', caller.rol, '| tipo:', typeof caller.rol);
-  console.log('[findOne] Rol.AGE:', Rol.AGE, '| iguales:', caller.rol === Rol.AGE);
-  // ... resto del método
-    // ✅ SC — AGE solo ve las suyas (comportamiento original)
+  async findOne(id: number, caller: any) {
     const solicitud = await this.prisma.solicitud.findUnique({
       where: { id_solicitud: id },
       include: {
@@ -180,15 +176,15 @@ async findOne(id: number, caller: any) {
     }
 
     // MOD — solo sus solicitudes propias + las que él revisa (RN-MOD-001)
-if (caller.rol === Rol.MOD) {
-  const esSuya    = solicitud.id_solicitante       === caller.id_usuario;
-  const esRevisor = solicitud.id_revisor_moderador === caller.id_usuario;
-  if (!esSuya && !esRevisor) {
-    throw new ForbiddenException(
-      'Solo puedes ver tus propias solicitudes o las de tu equipo.',
-    );
-  }
-}
+    if (caller.rol === Rol.MOD) {
+      const esSuya    = solicitud.id_solicitante       === caller.id_usuario;
+      const esRevisor = solicitud.id_revisor_moderador === caller.id_usuario;
+      if (!esSuya && !esRevisor) {
+        throw new ForbiddenException(
+          'Solo puedes ver tus propias solicitudes o las de tu equipo.',
+        );
+      }
+    }
 
     // ✅ SC — ADM sin acceso global solo ve solicitudes de su depto
     if (caller.rol === Rol.ADM && !caller.acceso_global) {
@@ -210,7 +206,7 @@ if (caller.rol === Rol.MOD) {
 
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada.`);
 
-    if (solicitud.estado !== 'Pendiente') {
+    if (solicitud.estado !== EstadoSolicitud.Pendiente) {
       throw new BadRequestException(
         `La solicitud ya está en estado "${solicitud.estado}". Solo se pueden revisar solicitudes Pendientes.`,
       );
@@ -223,7 +219,7 @@ if (caller.rol === Rol.MOD) {
     return this.prisma.solicitud.update({
       where: { id_solicitud: id },
       data: {
-        estado:               'EnRevision',
+        estado:               EstadoSolicitud.EnRevision,
         comentario_moderador: dto.comentario_moderador,
       },
     });
@@ -243,14 +239,14 @@ if (caller.rol === Rol.MOD) {
     const estadoActual = solicitud.estado;
 
     // Flujo A: tiene revisor → OBLIGATORIO pasar por EnRevision
-    if (solicitud.id_revisor_moderador !== null && estadoActual !== 'EnRevision') {
+    if (solicitud.id_revisor_moderador !== null && estadoActual !== EstadoSolicitud.EnRevision) {
       throw new BadRequestException(
         'Esta solicitud requiere revisión del Moderador antes de ser decidida (Flujo A).',
       );
     }
 
     // Flujos B y C: sin revisor → debe estar en Pendiente
-    if (solicitud.id_revisor_moderador === null && estadoActual !== 'Pendiente') {
+    if (solicitud.id_revisor_moderador === null && estadoActual !== EstadoSolicitud.Pendiente) {
       throw new BadRequestException(
         `La solicitud ya fue procesada (estado: "${estadoActual}").`,
       );
@@ -266,35 +262,35 @@ if (caller.rol === Rol.MOD) {
     });
   }
 
+  // ─── SOLICITUDES MOD PENDIENTES (ADM) ─────────────────────
   async findPendingMod(caller: Caller) {
-  // Scope: ADM depto filtra por su departamento
-  const solicitanteWhere: any = { rol: Rol.MOD };
-  if (caller.rol === Rol.ADM && !caller.acceso_global) {
-    if (!caller.id_departamento) {
-      throw new BadRequestException(
-        'No tienes un departamento asignado. Contacta al SA.',
-      );
+    const solicitanteWhere: any = { rol: Rol.MOD };
+    if (caller.rol === Rol.ADM && !caller.acceso_global) {
+      if (!caller.id_departamento) {
+        throw new BadRequestException(
+          'No tienes un departamento asignado. Contacta al SA.',
+        );
+      }
+      solicitanteWhere.id_departamento = caller.id_departamento;
     }
-    solicitanteWhere.id_departamento = caller.id_departamento;
-  }
 
-  return this.prisma.solicitud.findMany({
-    where: {
-      estado:               'Pendiente',
-      id_revisor_moderador: null,       // solo Flujo B
-      solicitante:          solicitanteWhere,
-    },
-    orderBy: { fecha_solicitud: 'asc' },
-    include: {
-      solicitante: {
-        select: {
-          id_usuario:      true,
-          nombre:          true,
-          email:           true,
-          id_departamento: true,
+    return this.prisma.solicitud.findMany({
+      where: {
+        estado:               EstadoSolicitud.Pendiente,
+        id_revisor_moderador: null,
+        solicitante:          solicitanteWhere,
+      },
+      orderBy: { fecha_solicitud: 'asc' },
+      include: {
+        solicitante: {
+          select: {
+            id_usuario:      true,
+            nombre:          true,
+            email:           true,
+            id_departamento: true,
+          },
         },
       },
-    },
-  });
-}
+    });
+  }
 }

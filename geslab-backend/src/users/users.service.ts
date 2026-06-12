@@ -86,15 +86,16 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(dto.contrasena, 10);
 
-    const user = await this.prisma.usuario.create({
-      data: {
-        nombre:          dto.nombre,
-        email:           dto.email,
-        contrasena_hash: hashedPassword,
-        rol:             dto.rol,
-        id_departamento,
-      },
-    });
+  const user = await this.prisma.usuario.create({
+    data: {
+      nombre:          dto.nombre,
+      email:           dto.email,
+      contrasena_hash: hashedPassword,
+      rol:             dto.rol,
+      id_departamento,
+      ...(dto.id_moderador !== undefined && { id_moderador: dto.id_moderador }),
+    },
+  });
 
     return this.sanitize(user);
   }

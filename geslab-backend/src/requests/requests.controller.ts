@@ -95,14 +95,14 @@ export class RequestsController {
   }
 
 // GET /requests/pending-mod — ADM ve solicitudes Pendientes de MODs de su depto
-@Get('pending-mod')
-@Roles(Rol.ADM, Rol.SA)
-@ApiOperation({
-  summary: '[SA/ADM Global] Todas las solicitudes MOD pendientes · [ADM Depto] Solo su departamento',
-})
-findPendingMod(@CurrentUser() caller: any) {
-  return this.requestsService.findPendingMod(caller);
-}
+  @Get('pending-mod')
+  @Roles(Rol.ADM, Rol.SA)
+  @ApiOperation({
+    summary: '[SA/ADM Global] Todas las solicitudes MOD pendientes · [ADM Depto] Solo su departamento',
+  })
+  findPendingMod(@CurrentUser() caller: any) {
+    return this.requestsService.findPendingMod(caller);
+  }
 
   // GET /requests/:id — detalle con control de visibilidad
   @Get(':id')
