@@ -53,7 +53,7 @@ let RequestsService = class RequestsService {
                 soporte_url: dto.soporte_url,
                 id_solicitante: id_usuario,
                 id_revisor_moderador,
-                estado: 'Pendiente',
+                estado: client_1.EstadoSolicitud.Pendiente,
             },
         });
     }
@@ -107,7 +107,7 @@ let RequestsService = class RequestsService {
         return this.prisma.solicitud.findMany({
             where: {
                 id_revisor_moderador: moderadorId,
-                estado: 'Pendiente',
+                estado: client_1.EstadoSolicitud.Pendiente,
             },
             orderBy: { fecha_solicitud: 'asc' },
             include: {
@@ -116,8 +116,6 @@ let RequestsService = class RequestsService {
         });
     }
     async findOne(id, caller) {
-        console.log('[findOne] caller.rol:', caller.rol, '| tipo:', typeof caller.rol);
-        console.log('[findOne] Rol.AGE:', client_1.Rol.AGE, '| iguales:', caller.rol === client_1.Rol.AGE);
         const solicitud = await this.prisma.solicitud.findUnique({
             where: { id_solicitud: id },
             include: {
@@ -151,7 +149,7 @@ let RequestsService = class RequestsService {
         });
         if (!solicitud)
             throw new common_1.NotFoundException(`Solicitud ${id} no encontrada.`);
-        if (solicitud.estado !== 'Pendiente') {
+        if (solicitud.estado !== client_1.EstadoSolicitud.Pendiente) {
             throw new common_1.BadRequestException(`La solicitud ya está en estado "${solicitud.estado}". Solo se pueden revisar solicitudes Pendientes.`);
         }
         if (solicitud.id_revisor_moderador !== moderador.id_usuario) {
@@ -160,7 +158,7 @@ let RequestsService = class RequestsService {
         return this.prisma.solicitud.update({
             where: { id_solicitud: id },
             data: {
-                estado: 'EnRevision',
+                estado: client_1.EstadoSolicitud.EnRevision,
                 comentario_moderador: dto.comentario_moderador,
             },
         });
@@ -173,10 +171,10 @@ let RequestsService = class RequestsService {
         if (!solicitud)
             throw new common_1.NotFoundException(`Solicitud ${id} no encontrada.`);
         const estadoActual = solicitud.estado;
-        if (solicitud.id_revisor_moderador !== null && estadoActual !== 'EnRevision') {
+        if (solicitud.id_revisor_moderador !== null && estadoActual !== client_1.EstadoSolicitud.EnRevision) {
             throw new common_1.BadRequestException('Esta solicitud requiere revisión del Moderador antes de ser decidida (Flujo A).');
         }
-        if (solicitud.id_revisor_moderador === null && estadoActual !== 'Pendiente') {
+        if (solicitud.id_revisor_moderador === null && estadoActual !== client_1.EstadoSolicitud.Pendiente) {
             throw new common_1.BadRequestException(`La solicitud ya fue procesada (estado: "${estadoActual}").`);
         }
         return this.prisma.solicitud.update({
@@ -198,7 +196,7 @@ let RequestsService = class RequestsService {
         }
         return this.prisma.solicitud.findMany({
             where: {
-                estado: 'Pendiente',
+                estado: client_1.EstadoSolicitud.Pendiente,
                 id_revisor_moderador: null,
                 solicitante: solicitanteWhere,
             },

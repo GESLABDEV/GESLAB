@@ -34,11 +34,11 @@ let NoveltiesController = class NoveltiesController {
     findAll(caller, page, limit, tipo, id_usuario) {
         return this.noveltiesService.findAll(caller, page ? parseInt(page) : 1, limit ? parseInt(limit) : 20, tipo, id_usuario ? parseInt(id_usuario) : undefined);
     }
-    findTeam(user) {
-        return this.noveltiesService.findTeam(user.id_usuario);
+    findTeam(caller) {
+        return this.noveltiesService.findTeam(caller.id_usuario);
     }
-    findByDepartment(user) {
-        return this.noveltiesService.findByDepartment(user.id_departamento);
+    findByDepartment(caller) {
+        return this.noveltiesService.findByDepartment(caller.id_departamento);
     }
     findOne(id, caller) {
         return this.noveltiesService.findOne(id, caller);

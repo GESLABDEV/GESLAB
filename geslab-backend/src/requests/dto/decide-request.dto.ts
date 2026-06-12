@@ -35,7 +35,7 @@ export class DecideRequestDto {
   @IsNotEmpty({ message: 'El comentario es obligatorio.' })
   @MinLength(10, { message: 'El comentario debe tener al menos 10 caracteres.' })
   @MaxLength(1000, { message: 'El comentario no puede superar los 1000 caracteres.' })
-  @Matches(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s.,;:/\-()\u00C0-\u024F#$%]*$/, {
+  @Matches(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s.,;:/\-()\u00C0-\u024F]*$/, {
     message:
       'El comentario debe comenzar con una letra y puede contener letras, números, espacios y puntuación básica (. , ; : / - ).',
   })

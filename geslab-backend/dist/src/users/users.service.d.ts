@@ -15,14 +15,14 @@ export declare class UsersService {
     create(dto: CreateUserDto, caller: Caller): Promise<any>;
     findAll(caller: Caller, page?: number, limit?: number, search?: string): Promise<{
         data: {
-            id_usuario: number;
-            email: string;
             nombre: string;
+            email: string;
             rol: import("@prisma/client").$Enums.Rol;
-            activo: boolean;
-            creado_en: Date;
             id_departamento: number | null;
             id_moderador: number | null;
+            id_usuario: number;
+            activo: boolean;
+            creado_en: Date;
         }[];
         total: number;
         page: number;
@@ -30,14 +30,14 @@ export declare class UsersService {
         totalPages: number;
     }>;
     findOne(id: number, caller?: Caller): Promise<{
-        id_usuario: number;
-        email: string;
         nombre: string;
+        email: string;
         rol: import("@prisma/client").$Enums.Rol;
-        activo: boolean;
-        creado_en: Date;
         id_departamento: number | null;
         id_moderador: number | null;
+        id_usuario: number;
+        activo: boolean;
+        creado_en: Date;
     }>;
     update(id: number, dto: UpdateUserDto, caller: Caller): Promise<any>;
     deactivate(id: number, caller: Caller): Promise<{

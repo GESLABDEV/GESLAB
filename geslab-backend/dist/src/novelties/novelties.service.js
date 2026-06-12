@@ -75,7 +75,7 @@ let NoveltiesService = class NoveltiesService {
         const overlap = await this.prisma.novedad.findFirst({
             where: {
                 id_usuario: dto.id_usuario,
-                estado: { in: ['Registrada', 'Activa'] },
+                estado: { in: [client_1.EstadoNovedad.Registrada, client_1.EstadoNovedad.Activa] },
                 AND: [
                     { fecha_inicio: { lte: new Date(dto.fecha_fin) } },
                     { fecha_fin: { gte: new Date(dto.fecha_inicio) } },
@@ -107,7 +107,7 @@ let NoveltiesService = class NoveltiesService {
             scopeAfectado.afectado = { id_departamento: caller.id_departamento };
         }
         const where = {
-            NOT: { estado: 'Eliminada' },
+            NOT: { estado: client_1.EstadoNovedad.Eliminada },
             ...scopeAfectado,
         };
         if (tipo)
@@ -132,7 +132,7 @@ let NoveltiesService = class NoveltiesService {
     async findTeam(moderadorId) {
         return this.prisma.novedad.findMany({
             where: {
-                estado: { in: ['Registrada', 'Activa'] },
+                estado: { in: [client_1.EstadoNovedad.Registrada, client_1.EstadoNovedad.Activa] },
                 afectado: { id_moderador: moderadorId },
             },
             orderBy: { fecha_inicio: 'asc' },
@@ -185,12 +185,12 @@ let NoveltiesService = class NoveltiesService {
         }
         await this.validarScopeNovedad(id, caller);
         const novedad = await this.findOne(id);
-        if (novedad.estado === 'Eliminada') {
+        if (novedad.estado === client_1.EstadoNovedad.Eliminada) {
             throw new common_1.ConflictException('La novedad ya fue eliminada.');
         }
         return this.prisma.novedad.update({
             where: { id_novedad: id },
-            data: { estado: 'Eliminada' },
+            data: { estado: client_1.EstadoNovedad.Eliminada },
         });
     }
     async findByDepartment(id_departamento) {
@@ -199,7 +199,7 @@ let NoveltiesService = class NoveltiesService {
         }
         return this.prisma.novedad.findMany({
             where: {
-                estado: { in: ['Registrada', 'Activa'] },
+                estado: { in: [client_1.EstadoNovedad.Registrada, client_1.EstadoNovedad.Activa] },
                 afectado: { id_departamento },
             },
             orderBy: { fecha_inicio: 'asc' },

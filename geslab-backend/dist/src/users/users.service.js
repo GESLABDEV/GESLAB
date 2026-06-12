@@ -98,6 +98,7 @@ let UsersService = class UsersService {
                 contrasena_hash: hashedPassword,
                 rol: dto.rol,
                 id_departamento,
+                ...(dto.id_moderador !== undefined && { id_moderador: dto.id_moderador }),
             },
         });
         return this.sanitize(user);

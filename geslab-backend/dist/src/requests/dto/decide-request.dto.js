@@ -44,7 +44,7 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)({ message: 'El comentario es obligatorio.' }),
     (0, class_validator_1.MinLength)(10, { message: 'El comentario debe tener al menos 10 caracteres.' }),
     (0, class_validator_1.MaxLength)(1000, { message: 'El comentario no puede superar los 1000 caracteres.' }),
-    (0, class_validator_1.Matches)(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s.,;:/\-()\u00C0-\u024F#$%]*$/, {
+    (0, class_validator_1.Matches)(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s.,;:/\-()\u00C0-\u024F]*$/, {
         message: 'El comentario debe comenzar con una letra y puede contener letras, números, espacios y puntuación básica (. , ; : / - ).',
     }),
     __metadata("design:type", String)
