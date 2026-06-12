@@ -179,6 +179,17 @@ async findOne(id: number, caller: any) {
       throw new ForbiddenException('Solo puedes ver tus propias solicitudes.');
     }
 
+    // MOD — solo sus solicitudes propias + las que él revisa (RN-MOD-001)
+if (caller.rol === Rol.MOD) {
+  const esSuya    = solicitud.id_solicitante       === caller.id_usuario;
+  const esRevisor = solicitud.id_revisor_moderador === caller.id_usuario;
+  if (!esSuya && !esRevisor) {
+    throw new ForbiddenException(
+      'Solo puedes ver tus propias solicitudes o las de tu equipo.',
+    );
+  }
+}
+
     // ✅ SC — ADM sin acceso global solo ve solicitudes de su depto
     if (caller.rol === Rol.ADM && !caller.acceso_global) {
       if (solicitud.solicitante.id_departamento !== caller.id_departamento) {

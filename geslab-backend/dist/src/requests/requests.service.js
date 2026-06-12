@@ -131,6 +131,13 @@ let RequestsService = class RequestsService {
         if (caller.rol === client_1.Rol.AGE && solicitud.id_solicitante !== caller.id_usuario) {
             throw new common_1.ForbiddenException('Solo puedes ver tus propias solicitudes.');
         }
+        if (caller.rol === client_1.Rol.MOD) {
+            const esSuya = solicitud.id_solicitante === caller.id_usuario;
+            const esRevisor = solicitud.id_revisor_moderador === caller.id_usuario;
+            if (!esSuya && !esRevisor) {
+                throw new common_1.ForbiddenException('Solo puedes ver tus propias solicitudes o las de tu equipo.');
+            }
+        }
         if (caller.rol === client_1.Rol.ADM && !caller.acceso_global) {
             if (solicitud.solicitante.id_departamento !== caller.id_departamento) {
                 throw new common_1.ForbiddenException('No puedes ver solicitudes fuera de tu departamento.');

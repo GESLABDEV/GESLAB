@@ -37,7 +37,7 @@ enum FrecuenciaMalla {
 
 enum EstadoTurno {
   Programado
-  EnCurso
+  EnCurso     @map("En Curso")
   Completado
   Cancelado
 }
@@ -45,8 +45,8 @@ enum EstadoTurno {
 enum TipoNovedad {
   Vacaciones
   Incapacidad
-  PermisoRemunerado
-  PermisoNoRemunerado
+  PermisoRemunerado    @map("Permiso Remunerado")
+  PermisoNoRemunerado  @map("Permiso No Remunerado")
   Ausencia
 }
 
@@ -58,15 +58,15 @@ enum EstadoNovedad {
 }
 
 enum TipoSolicitud {
-  CambioDeTurno
+  CambioDeTurno   @map("Cambio de Turno")
   Vacaciones
-  PermisoEspecial
+  PermisoEspecial @map("Permiso Especial")
   Otro
 }
 
 enum EstadoSolicitud {
   Pendiente
-  EnRevision
+  EnRevision  @map("En Revision")
   Aprobada
   Rechazada
 }
@@ -78,19 +78,19 @@ enum EstadoEncuesta {
 }
 
 enum TipoNotificacion {
-  CambioEstadoSolicitud
-  MallaPublicada
-  EncuestaPublicada
-  AlertaCritica
-  CuentaDesactivada
-  CuentaReactivada
+  CambioEstadoSolicitud @map("Cambio Estado Solicitud")
+  MallaPublicada        @map("Malla Publicada")
+  EncuestaPublicada     @map("Encuesta Publicada")
+  AlertaCritica         @map("Alerta Critica")
+  CuentaDesactivada     @map("Cuenta Desactivada")
+  CuentaReactivada      @map("Cuenta Reactivada")
 }
 
 enum TipoAlerta {
-  BienestarCritico
-  BienestarMedio
-  BienestarBajo
-  ViolacionCST
+  BienestarCritico @map("Bienestar Critico")
+  BienestarMedio   @map("Bienestar Medio")
+  BienestarBajo    @map("Bienestar Bajo")
+  ViolacionCST     @map("Violacion CST")
 }
 
 enum NivelAlerta {

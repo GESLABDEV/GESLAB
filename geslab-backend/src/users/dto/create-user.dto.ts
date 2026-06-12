@@ -15,11 +15,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   nombre: string;
 
-  @ApiProperty({ example: 'juan@empresa.com' })
+  @ApiProperty({ example: 'juan@geslab.com' })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'Segura1234', minLength: 8 })
+  @ApiProperty({ example: 'Admin1234', minLength: 8 })
   @IsString()
   @MinLength(8)
   contrasena: string;
@@ -31,4 +31,8 @@ export class CreateUserDto {
   @ApiPropertyOptional({ example: 1, description: 'ID del departamento (opcional)' })
   @IsOptional()
   id_departamento?: number;
+
+  @ApiPropertyOptional({ example: 4, description: 'ID del moderador asignado (solo para AGE)' })
+  @IsOptional()
+  id_moderador?: number | null;
 }
