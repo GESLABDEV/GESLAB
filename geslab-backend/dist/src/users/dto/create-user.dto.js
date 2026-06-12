@@ -19,6 +19,7 @@ class CreateUserDto {
     contrasena;
     rol;
     id_departamento;
+    id_moderador;
 }
 exports.CreateUserDto = CreateUserDto;
 __decorate([
@@ -28,12 +29,12 @@ __decorate([
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "nombre", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'juan@empresa.com' }),
+    (0, swagger_1.ApiProperty)({ example: 'juan@geslab.com' }),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Segura1234', minLength: 8 }),
+    (0, swagger_1.ApiProperty)({ example: 'Admin1234', minLength: 8 }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(8),
     __metadata("design:type", String)
@@ -48,4 +49,9 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateUserDto.prototype, "id_departamento", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 4, description: 'ID del moderador asignado (solo para AGE)' }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreateUserDto.prototype, "id_moderador", void 0);
 //# sourceMappingURL=create-user.dto.js.map

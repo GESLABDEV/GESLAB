@@ -5,4 +5,5 @@ export declare class CreateUserDto {
     contrasena: string;
     rol: Rol;
     id_departamento?: number;
+    id_moderador?: number | null;
 }
