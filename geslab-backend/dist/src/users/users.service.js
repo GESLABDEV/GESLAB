@@ -166,8 +166,8 @@ let UsersService = class UsersService {
     }
     async update(id, dto, caller) {
         await this.validarScopeDepto(id, caller);
-        const usuarioActual = await this.findOne(id);
-        const rolEfectivo = dto.rol ?? usuarioActual.rol;
+        const before = await this.findOne(id);
+        const rolEfectivo = dto.rol ?? before.rol;
         if (dto.id_moderador !== undefined && dto.id_moderador !== null) {
             if (rolEfectivo === client_1.Rol.SA) {
                 throw new common_1.BadRequestException('Un usuario con rol SA no puede tener supervisor.');
@@ -195,7 +195,7 @@ let UsersService = class UsersService {
                 ...(dto.id_moderador !== undefined && { id_moderador: dto.id_moderador }),
             },
         });
-        return this.sanitize(updated);
+        return { before, after: this.sanitize(updated) };
     }
     async deactivate(id, caller) {
         await this.validarScopeDepto(id, caller);

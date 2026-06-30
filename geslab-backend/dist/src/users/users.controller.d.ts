@@ -7,14 +7,14 @@ export declare class UsersController {
     create(dto: CreateUserDto, caller: any): Promise<any>;
     findAll(caller: any, page?: string, limit?: string, search?: string): Promise<{
         data: {
-            nombre: string;
-            email: string;
-            rol: import("@prisma/client").$Enums.Rol;
-            id_departamento: number | null;
-            id_moderador: number | null;
             id_usuario: number;
+            email: string;
+            nombre: string;
+            rol: import("@prisma/client").$Enums.Rol;
             activo: boolean;
             creado_en: Date;
+            id_departamento: number | null;
+            id_moderador: number | null;
         }[];
         total: number;
         page: number;
@@ -22,16 +22,28 @@ export declare class UsersController {
         totalPages: number;
     }>;
     findOne(id: number, caller: any): Promise<{
-        nombre: string;
-        email: string;
-        rol: import("@prisma/client").$Enums.Rol;
-        id_departamento: number | null;
-        id_moderador: number | null;
         id_usuario: number;
+        email: string;
+        nombre: string;
+        rol: import("@prisma/client").$Enums.Rol;
         activo: boolean;
         creado_en: Date;
+        id_departamento: number | null;
+        id_moderador: number | null;
     }>;
-    update(id: number, dto: UpdateUserDto, caller: any): Promise<any>;
+    update(id: number, dto: UpdateUserDto, caller: any): Promise<{
+        before: {
+            id_usuario: number;
+            email: string;
+            nombre: string;
+            rol: import("@prisma/client").$Enums.Rol;
+            activo: boolean;
+            creado_en: Date;
+            id_departamento: number | null;
+            id_moderador: number | null;
+        };
+        after: any;
+    }>;
     deactivate(id: number, caller: any): Promise<{
         message: string;
         id: number;

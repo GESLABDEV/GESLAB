@@ -14,6 +14,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './reports/reports.module';
 import { EngineModule } from './engine/engine.module';
 import { DepartmentsModule } from './departments/departments.module';
+import { ShiftTemplatesModule } from './shift-templates/shift-templates.module';
+import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
   imports: [
@@ -30,8 +32,10 @@ import { DepartmentsModule } from './departments/departments.module';
     NotificationsModule,
     ReportsModule,
     EngineModule,
+    ShiftTemplatesModule,
+    SchedulesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers:   [AppService],
 })
 export class AppModule {}
