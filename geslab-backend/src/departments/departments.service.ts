@@ -129,14 +129,15 @@ export class DepartmentsService {
 
   // ─── UPDATE ───────────────────────────────────────────────
   async update(id: number, dto: UpdateDepartmentDto) {
-    await this.findOne(id);
+    // ✅ B2 — Capturar estado previo antes de aplicar cambios
+    const before = await this.findOne(id);
 
     if (dto.id_administrador !== undefined && dto.id_administrador !== null) {
       // excludeDeptoId: este mismo depto no cuenta como conflicto
       await this.validarAdministrador(dto.id_administrador, id);
     }
 
-    return this.prisma.departamento.update({
+    const after = await this.prisma.departamento.update({
       where: { id_departamento: id },
       data: {
         ...(dto.nombre && { nombre: dto.nombre }),
@@ -147,6 +148,8 @@ export class DepartmentsService {
         administrador: { select: ADMIN_SELECT },
       },
     });
+
+    return { before, after };
   }
 
   // ─── REMOVE ───────────────────────────────────────────────

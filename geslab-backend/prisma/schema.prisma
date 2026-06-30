@@ -1,7 +1,14 @@
 // ============================================================
-// schema.prisma — GESLAB v5.2
-// Generado por BMO · Basado en ERD v2.1
+// schema.prisma — GESLAB v5.2  →  Sprint 6 (Motor de Mallas)
+// Actualizado por BMO · T-01 · 2026-06-20
 // Prisma v5 · PostgreSQL 16
+// ============================================================
+// Cambios T-01:
+//   [A] FrecuenciaMalla  → agrega Personalizada
+//   [B] EstadoTurno      → reemplazo completo (Pendiente · Confirmado · Conflicto)
+//   [C] PlantillaTurno   → modelo nuevo
+//   [D] Turno            → cst_conflicto + cst_detalle + default Pendiente
+//   [E] Usuario          → relación inversa plantillas_creadas
 // ============================================================
 
 generator client {
@@ -29,24 +36,26 @@ enum EstadoMalla {
   Rechazada
 }
 
+// [A] Agrega Personalizada
 enum FrecuenciaMalla {
   Semanal
   Quincenal
   Mensual
+  Personalizada
 }
 
+// [B] Reemplazo completo — turnos tabla vacía confirmado
 enum EstadoTurno {
-  Programado
-  EnCurso     @map("En Curso")
-  Completado
-  Cancelado
+  Pendiente
+  Confirmado
+  Conflicto
 }
 
 enum TipoNovedad {
   Vacaciones
   Incapacidad
-  PermisoRemunerado    @map("Permiso Remunerado")
-  PermisoNoRemunerado  @map("Permiso No Remunerado")
+  PermisoRemunerado   @map("Permiso Remunerado")
+  PermisoNoRemunerado @map("Permiso No Remunerado")
   Ausencia
 }
 
@@ -66,7 +75,7 @@ enum TipoSolicitud {
 
 enum EstadoSolicitud {
   Pendiente
-  EnRevision  @map("En Revision")
+  EnRevision @map("En Revision")
   Aprobada
   Rechazada
 }
@@ -116,6 +125,7 @@ model Departamento {
   @@map("departamentos")
 }
 
+// [E] Agrega plantillas_creadas
 model Usuario {
   id_usuario      Int      @id @default(autoincrement())
   nombre          String   @db.VarChar(150)
@@ -124,7 +134,7 @@ model Usuario {
   rol             Rol
   disponible      Boolean  @default(true)
   activo          Boolean  @default(true)
-  acceso_global   Boolean @default(false)
+  acceso_global   Boolean  @default(false)
   creado_en       DateTime @default(now())
   actualizado_en  DateTime @updatedAt
 
@@ -139,6 +149,9 @@ model Usuario {
 
   mallas_creadas   Malla[] @relation("MallaCreador")
   mallas_aprobadas Malla[] @relation("MallaAprobador")
+
+  // [E] Relación inversa — PlantillaTurno
+  plantillas_creadas PlantillaTurno[]
 
   turnos Turno[]
 
@@ -157,6 +170,22 @@ model Usuario {
   logs           LogAuditoria[]
 
   @@map("usuarios")
+}
+
+// [C] Modelo nuevo — PlantillaTurno
+// hora_fin > hora_inicio se valida en DTO/service, no en BD
+model PlantillaTurno {
+  id_plantilla Int      @id @default(autoincrement())
+  nombre       String   @db.VarChar(100)
+  hora_inicio  DateTime @db.Time()
+  hora_fin     DateTime @db.Time()
+  activa       Boolean  @default(true)
+  creado_en    DateTime @default(now())
+
+  id_creador Int
+  creador    Usuario @relation(fields: [id_creador], references: [id_usuario])
+
+  @@map("plantillas_turno")
 }
 
 model Malla {
@@ -181,12 +210,15 @@ model Malla {
   @@map("mallas")
 }
 
+// [D] Agrega cst_conflicto, cst_detalle · default estado → Pendiente
 model Turno {
-  id_turno    Int         @id @default(autoincrement())
-  fecha       DateTime    @db.Date
-  hora_inicio DateTime    @db.Time()
-  hora_fin    DateTime    @db.Time()
-  estado      EstadoTurno @default(Programado)
+  id_turno      Int         @id @default(autoincrement())
+  fecha         DateTime    @db.Date
+  hora_inicio   DateTime    @db.Time()
+  hora_fin      DateTime    @db.Time()
+  estado        EstadoTurno @default(Pendiente)
+  cst_conflicto Boolean     @default(false)
+  cst_detalle   String?     @db.Text
 
   id_malla Int
   malla    Malla @relation(fields: [id_malla], references: [id_malla])
@@ -225,7 +257,6 @@ model Solicitud {
   descripcion          String          @db.Text
   fecha_solicitud      DateTime        @default(now())
   estado               EstadoSolicitud @default(Pendiente)
-  // ✅ A1: comentario_rechazo → comentario (aplica a Aprobada y Rechazada)
   comentario           String?         @db.VarChar(1000)
   comentario_moderador String?         @db.VarChar(1000)
   soporte_url          String?         @db.VarChar(500)

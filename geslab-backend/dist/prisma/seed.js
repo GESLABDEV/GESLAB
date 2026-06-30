@@ -43,9 +43,9 @@ const pool = new pg_1.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new adapter_pg_1.PrismaPg(pool);
 const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
-    console.log('🌱 Iniciando seed de GESLAB — Sprint 5 + SC\n');
+    console.log('🌱 Iniciando seed de GESLAB — Sprint 6 (Motor de Mallas)\n');
     const saltRounds = 10;
-    console.log('👤 [1/5] Sembrando usuarios...');
+    console.log('👤 [1/6] Sembrando usuarios...');
     const sa = await prisma.usuario.upsert({
         where: { email: 'sa@geslab.com' },
         update: {},
@@ -162,7 +162,7 @@ async function main() {
     console.log(`   ✅ ADM    : ${adm1.email} (global=true), ${adm2.email} (global=false)`);
     console.log(`   ✅ MODs   : ${mod1.email}, ${mod2.email}`);
     console.log(`   ✅ AGEs   : ${age1.email}, ${age2.email}, ${age3.email}, ${age4.email}`);
-    console.log('\n🏢 [2/5] Sembrando departamentos...');
+    console.log('\n🏢 [2/6] Sembrando departamentos...');
     const dept1Existente = await prisma.departamento.findFirst({
         where: { nombre: 'Atención al Cliente' },
     });
@@ -177,7 +177,7 @@ async function main() {
     });
     console.log(`   ✅ ${dept1.nombre} (id: ${dept1.id_departamento})`);
     console.log(`   ✅ ${dept2.nombre} (id: ${dept2.id_departamento})`);
-    console.log('\n🔗 [2b/5] Asignando departamentos y administradores...');
+    console.log('\n🔗 [2b/6] Asignando departamentos y administradores...');
     await prisma.departamento.update({
         where: { id_departamento: dept1.id_departamento },
         data: { id_administrador: adm1.id_usuario },
@@ -220,7 +220,7 @@ async function main() {
     });
     console.log(`   ✅ dept1 "Atención al Cliente" → admin: adm1 | usuarios: adm1, mod1, age1, age2`);
     console.log(`   ✅ dept2 "Soporte Técnico"      → admin: adm2 | usuarios: adm2, mod2, age3, age4`);
-    console.log('\n📬 [3/5] Sembrando novedades...');
+    console.log('\n📬 [3/6] Sembrando novedades...');
     const novedadesSeed = [
         {
             tipo: client_1.TipoNovedad.Vacaciones,
@@ -279,7 +279,7 @@ async function main() {
             console.log(`   ⏭️  Ya existe [${nov.tipo}] → omitida`);
         }
     }
-    console.log('\n📋 [4/5] Sembrando solicitudes (CU-04)...');
+    console.log('\n📋 [4/6] Sembrando solicitudes (CU-04)...');
     const solicitudesSeed = [
         {
             _key: 'SOL-A1',
@@ -339,7 +339,62 @@ async function main() {
             console.log(`   ⏭️  ${_key} ya existe (id: ${existente.id_solicitud}) — omitida`);
         }
     }
-    console.log('\n✅ Seed Sprint 5 + SC completado.\n');
+    console.log('\n🗓️  [5/6] Sembrando plantillas de turno...');
+    const plantillasSeed = [
+        {
+            nombre: 'Turno Mañana',
+            hora_inicio: new Date('1970-01-01T06:00:00.000Z'),
+            hora_fin: new Date('1970-01-01T14:00:00.000Z'),
+            activa: true,
+            id_creador: adm1.id_usuario,
+        },
+        {
+            nombre: 'Turno Tarde',
+            hora_inicio: new Date('1970-01-01T14:00:00.000Z'),
+            hora_fin: new Date('1970-01-01T22:00:00.000Z'),
+            activa: true,
+            id_creador: adm1.id_usuario,
+        },
+        {
+            nombre: 'Turno Diurno',
+            hora_inicio: new Date('1970-01-01T08:00:00.000Z'),
+            hora_fin: new Date('1970-01-01T16:00:00.000Z'),
+            activa: true,
+            id_creador: adm1.id_usuario,
+        },
+        {
+            nombre: 'Turno Mixto',
+            hora_inicio: new Date('1970-01-01T10:00:00.000Z'),
+            hora_fin: new Date('1970-01-01T18:00:00.000Z'),
+            activa: true,
+            id_creador: adm1.id_usuario,
+        },
+        {
+            nombre: 'Turno Legado',
+            hora_inicio: new Date('1970-01-01T07:00:00.000Z'),
+            hora_fin: new Date('1970-01-01T12:00:00.000Z'),
+            activa: false,
+            id_creador: adm1.id_usuario,
+        },
+    ];
+    for (const pt of plantillasSeed) {
+        const existente = await prisma.plantillaTurno.findFirst({
+            where: {
+                nombre: pt.nombre,
+                id_creador: pt.id_creador,
+            },
+        });
+        if (!existente) {
+            const creada = await prisma.plantillaTurno.create({ data: pt });
+            const ini = pt.hora_inicio.toISOString().slice(11, 16);
+            const fin = pt.hora_fin.toISOString().slice(11, 16);
+            console.log(`   ✅ [id:${creada.id_plantilla}] ${creada.nombre.padEnd(16)} | ${ini} → ${fin} | activa: ${pt.activa}`);
+        }
+        else {
+            console.log(`   ⏭️  "${pt.nombre}" ya existe (id: ${existente.id_plantilla}) — omitida`);
+        }
+    }
+    console.log('\n✅ Seed Sprint 6 (Motor de Mallas) completado.\n');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📌 Mapa de usuarios:');
     console.log('   sa@geslab.com   → SA              | sin depto');
@@ -357,6 +412,13 @@ async function main() {
     console.log('   SOL-A2 → age2 | EnRevision | revisor: mod1');
     console.log('   SOL-B1 → mod1 | Pendiente  | sin revisor');
     console.log('   SOL-C1 → adm1 | Pendiente  | sin revisor');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📌 Plantillas de turno (creador: adm1):');
+    console.log('   Turno Mañana  | 06:00 → 14:00 | activa: true');
+    console.log('   Turno Tarde   | 14:00 → 22:00 | activa: true');
+    console.log('   Turno Diurno  | 08:00 → 16:00 | activa: true');
+    console.log('   Turno Mixto   | 10:00 → 18:00 | activa: true');
+    console.log('   Turno Legado  | 07:00 → 12:00 | activa: false');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 }
 main()

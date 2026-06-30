@@ -23,6 +23,8 @@ const notifications_module_1 = require("./notifications/notifications.module");
 const reports_module_1 = require("./reports/reports.module");
 const engine_module_1 = require("./engine/engine.module");
 const departments_module_1 = require("./departments/departments.module");
+const shift_templates_module_1 = require("./shift-templates/shift-templates.module");
+const schedules_module_1 = require("./schedules/schedules.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -42,6 +44,8 @@ exports.AppModule = AppModule = __decorate([
             notifications_module_1.NotificationsModule,
             reports_module_1.ReportsModule,
             engine_module_1.EngineModule,
+            shift_templates_module_1.ShiftTemplatesModule,
+            schedules_module_1.SchedulesModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

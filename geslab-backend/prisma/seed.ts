@@ -18,14 +18,14 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('🌱 Iniciando seed de GESLAB — Sprint 5 + SC\n');
+  console.log('🌱 Iniciando seed de GESLAB — Sprint 6 (Motor de Mallas)\n');
 
   const saltRounds = 10;
 
   // ============================================================
   // BLOQUE 1 — USUARIOS
   // ============================================================
-  console.log('👤 [1/5] Sembrando usuarios...');
+  console.log('👤 [1/6] Sembrando usuarios...');
 
   const sa = await prisma.usuario.upsert({
     where:  { email: 'sa@geslab.com' },
@@ -156,7 +156,7 @@ async function main() {
   // ============================================================
   // BLOQUE 2 — DEPARTAMENTOS
   // ============================================================
-  console.log('\n🏢 [2/5] Sembrando departamentos...');
+  console.log('\n🏢 [2/6] Sembrando departamentos...');
 
   const dept1Existente = await prisma.departamento.findFirst({
     where: { nombre: 'Atención al Cliente' },
@@ -176,9 +176,8 @@ async function main() {
   console.log(`   ✅ ${dept2.nombre} (id: ${dept2.id_departamento})`);
 
   // ── Sub-bloque 2b — Asignaciones cruzadas ─────────────────
-  console.log('\n🔗 [2b/5] Asignando departamentos y administradores...');
+  console.log('\n🔗 [2b/6] Asignando departamentos y administradores...');
 
-  // Departamentos → administrador
   await prisma.departamento.update({
     where: { id_departamento: dept1.id_departamento },
     data:  { id_administrador: adm1.id_usuario },
@@ -188,7 +187,6 @@ async function main() {
     data:  { id_administrador: adm2.id_usuario },
   });
 
-  // Usuarios → departamento
   await prisma.usuario.update({
     where: { id_usuario: adm1.id_usuario },
     data:  { id_departamento: dept1.id_departamento },
@@ -228,7 +226,7 @@ async function main() {
   // ============================================================
   // BLOQUE 3 — NOVEDADES
   // ============================================================
-  console.log('\n📬 [3/5] Sembrando novedades...');
+  console.log('\n📬 [3/6] Sembrando novedades...');
 
   const novedadesSeed = [
     {
@@ -292,7 +290,7 @@ async function main() {
   // ============================================================
   // BLOQUE 4 — SOLICITUDES
   // ============================================================
-  console.log('\n📋 [4/5] Sembrando solicitudes (CU-04)...');
+  console.log('\n📋 [4/6] Sembrando solicitudes (CU-04)...');
 
   type SolicitudSeed = {
     _key: string;
@@ -366,9 +364,73 @@ async function main() {
   }
 
   // ============================================================
+  // BLOQUE 5 — PLANTILLAS DE TURNO  [T-08]
+  // ============================================================
+  // Creadas por adm1 (ADM Global) — RN-MALLAS-001
+  // hora_fin > hora_inicio en todos los casos — RN-CST-002
+  // Turno Legado: activa=false — permite QA del filtro por activa
+  // ============================================================
+  console.log('\n🗓️  [5/6] Sembrando plantillas de turno...');
+
+  const plantillasSeed = [
+    {
+      nombre:      'Turno Mañana',
+      hora_inicio: new Date('1970-01-01T06:00:00.000Z'),
+      hora_fin:    new Date('1970-01-01T14:00:00.000Z'),
+      activa:      true,
+      id_creador:  adm1.id_usuario,
+    },
+    {
+      nombre:      'Turno Tarde',
+      hora_inicio: new Date('1970-01-01T14:00:00.000Z'),
+      hora_fin:    new Date('1970-01-01T22:00:00.000Z'),
+      activa:      true,
+      id_creador:  adm1.id_usuario,
+    },
+    {
+      nombre:      'Turno Diurno',
+      hora_inicio: new Date('1970-01-01T08:00:00.000Z'),
+      hora_fin:    new Date('1970-01-01T16:00:00.000Z'),
+      activa:      true,
+      id_creador:  adm1.id_usuario,
+    },
+    {
+      nombre:      'Turno Mixto',
+      hora_inicio: new Date('1970-01-01T10:00:00.000Z'),
+      hora_fin:    new Date('1970-01-01T18:00:00.000Z'),
+      activa:      true,
+      id_creador:  adm1.id_usuario,
+    },
+    {
+      nombre:      'Turno Legado',
+      hora_inicio: new Date('1970-01-01T07:00:00.000Z'),
+      hora_fin:    new Date('1970-01-01T12:00:00.000Z'),
+      activa:      false, // ← inactiva — QA: verifica filtro activa=false
+      id_creador:  adm1.id_usuario,
+    },
+  ];
+
+  for (const pt of plantillasSeed) {
+    const existente = await prisma.plantillaTurno.findFirst({
+      where: {
+        nombre:     pt.nombre,
+        id_creador: pt.id_creador,
+      },
+    });
+    if (!existente) {
+      const creada = await prisma.plantillaTurno.create({ data: pt });
+      const ini = pt.hora_inicio.toISOString().slice(11, 16);
+      const fin = pt.hora_fin.toISOString().slice(11, 16);
+      console.log(`   ✅ [id:${creada.id_plantilla}] ${creada.nombre.padEnd(16)} | ${ini} → ${fin} | activa: ${pt.activa}`);
+    } else {
+      console.log(`   ⏭️  "${pt.nombre}" ya existe (id: ${existente.id_plantilla}) — omitida`);
+    }
+  }
+
+  // ============================================================
   // RESUMEN FINAL
   // ============================================================
-  console.log('\n✅ Seed Sprint 5 + SC completado.\n');
+  console.log('\n✅ Seed Sprint 6 (Motor de Mallas) completado.\n');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('📌 Mapa de usuarios:');
   console.log('   sa@geslab.com   → SA              | sin depto');
@@ -386,6 +448,13 @@ async function main() {
   console.log('   SOL-A2 → age2 | EnRevision | revisor: mod1');
   console.log('   SOL-B1 → mod1 | Pendiente  | sin revisor');
   console.log('   SOL-C1 → adm1 | Pendiente  | sin revisor');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📌 Plantillas de turno (creador: adm1):');
+  console.log('   Turno Mañana  | 06:00 → 14:00 | activa: true');
+  console.log('   Turno Tarde   | 14:00 → 22:00 | activa: true');
+  console.log('   Turno Diurno  | 08:00 → 16:00 | activa: true');
+  console.log('   Turno Mixto   | 10:00 → 18:00 | activa: true');
+  console.log('   Turno Legado  | 07:00 → 12:00 | activa: false');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 }
 

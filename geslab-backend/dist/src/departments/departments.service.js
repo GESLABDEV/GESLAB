@@ -107,11 +107,11 @@ let DepartmentsService = class DepartmentsService {
         });
     }
     async update(id, dto) {
-        await this.findOne(id);
+        const before = await this.findOne(id);
         if (dto.id_administrador !== undefined && dto.id_administrador !== null) {
             await this.validarAdministrador(dto.id_administrador, id);
         }
-        return this.prisma.departamento.update({
+        const after = await this.prisma.departamento.update({
             where: { id_departamento: id },
             data: {
                 ...(dto.nombre && { nombre: dto.nombre }),
@@ -121,6 +121,7 @@ let DepartmentsService = class DepartmentsService {
                 administrador: { select: ADMIN_SELECT },
             },
         });
+        return { before, after };
     }
     async remove(id) {
         await this.findOne(id);

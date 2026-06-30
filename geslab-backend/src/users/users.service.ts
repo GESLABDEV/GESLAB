@@ -86,16 +86,16 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(dto.contrasena, 10);
 
-  const user = await this.prisma.usuario.create({
-    data: {
-      nombre:          dto.nombre,
-      email:           dto.email,
-      contrasena_hash: hashedPassword,
-      rol:             dto.rol,
-      id_departamento,
-      ...(dto.id_moderador !== undefined && { id_moderador: dto.id_moderador }),
-    },
-  });
+    const user = await this.prisma.usuario.create({
+      data: {
+        nombre:          dto.nombre,
+        email:           dto.email,
+        contrasena_hash: hashedPassword,
+        rol:             dto.rol,
+        id_departamento,
+        ...(dto.id_moderador !== undefined && { id_moderador: dto.id_moderador }),
+      },
+    });
 
     return this.sanitize(user);
   }
@@ -148,43 +148,43 @@ export class UsersService {
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-// ─── FIND ONE ──────────────────────────────────────────────
-async findOne(id: number, caller?: Caller) {
-  // ✅ SC — solo aplica scope si viene caller (llamada externa)
-  if (caller) {
-    await this.validarScopeDepto(id, caller);
-  }
+  // ─── FIND ONE ──────────────────────────────────────────────
+  async findOne(id: number, caller?: Caller) {
+    // ✅ SC — solo aplica scope si viene caller (llamada externa)
+    if (caller) {
+      await this.validarScopeDepto(id, caller);
+    }
 
-  const user = await this.prisma.usuario.findUnique({
-    where: { id_usuario: id },
-    select: {
-      id_usuario:      true,
-      nombre:          true,
-      email:           true,
-      rol:             true,
-      activo:          true,
-      id_departamento: true,
-      id_moderador:    true,
-      creado_en:       true,
-    },
-  });
+    const user = await this.prisma.usuario.findUnique({
+      where: { id_usuario: id },
+      select: {
+        id_usuario:      true,
+        nombre:          true,
+        email:           true,
+        rol:             true,
+        activo:          true,
+        id_departamento: true,
+        id_moderador:    true,
+        creado_en:       true,
+      },
+    });
 
-  if (!user) {
-    throw new NotFoundException(`Usuario con ID ${id} no encontrado.`);
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado.`);
+    }
+    return user;
   }
-  return user;
-}
 
   // ─── UPDATE ───────────────────────────────────────────────
   async update(id: number, dto: UpdateUserDto, caller: Caller) {
     // ✅ SC — validar que el objetivo pertenece al depto del caller
     await this.validarScopeDepto(id, caller);
 
-    // 1. Leer usuario actual — fuente de verdad del rol actual
-    const usuarioActual = await this.findOne(id);
+    // 1. Leer usuario actual — fuente de verdad del rol actual y estado before
+    const before = await this.findOne(id);
 
     // 2. Rol efectivo
-    const rolEfectivo: Rol = (dto.rol as Rol) ?? usuarioActual.rol;
+    const rolEfectivo: Rol = (dto.rol as Rol) ?? before.rol;
 
     // 3. Validar jerarquía de supervisor si viene id_moderador
     if (dto.id_moderador !== undefined && dto.id_moderador !== null) {
@@ -227,7 +227,8 @@ async findOne(id: number, caller?: Caller) {
       },
     });
 
-    return this.sanitize(updated);
+    // ✅ B2 — Retornar estado antes y después del cambio
+    return { before, after: this.sanitize(updated) };
   }
 
   // ─── DEACTIVATE (soft delete) ──────────────────────────────
