@@ -4,25 +4,81 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | Setup inicial — scaffold Next.js funcionando, sin datos reales aún |
-| Última actualización | 2026-09-03 |
-| Bloqueadores | Esperando .env de Daniel para levantar el backend localmente |
+| Fase actual | Setup completo — backend local funcionando, login confirmado, listo para empezar a programar |
+| Última actualización | 2026-09-04 |
+| Bloqueadores | Ninguno |
 
 ---
 
-## Backend disponible (referencia rápida)
+## Decisión de arquitectura (confirmada por Daniel)
 
-| Módulo | Base URL | Estado |
-|---|---|---|
-| Auth | `/auth` | Estable (sin confirmar en Swagger todavía) |
-| Usuarios | `/users` | Estable (sin confirmar en Swagger todavía) |
-| Departamentos | `/departments` | Estable (sin confirmar en Swagger todavía) |
-| Novedades | `/novedades` | Estable (sin confirmar en Swagger todavía) |
-| Solicitudes laborales | `/requests` | Estable (sin confirmar en Swagger todavía) |
-| Plantillas de turno | `/shift-templates` | Estable Sprint 6 (sin confirmar en Swagger todavía) |
-| Mallas / Turnos | `/schedules`, `/shifts` | Estable Sprint 6 (sin confirmar en Swagger todavía) |
+- El frontend se trabaja en el repo `GESLABDEV/GESLAB`, carpeta raíz, sobre la rama `Eric` (NO en `master/geslab-frontend`, que es un experimento separado sin usar).
+- El backend (`geslab-backend/`) se corre en una copia local aparte, clonada de `master`, en `~/GESLAB-backend/geslab-backend/`. No se mezcla con la carpeta del frontend.
+- Stack frontend: Next.js 16.1.6 (App Router, Turbopack), React 19.2.3, Tailwind CSS 4, TypeScript.
 
-> Nota: esta tabla viene de documentación previa, NO ha sido verificada en Swagger en vivo.
+---
+
+## Backend local — cómo levantarlo (ya funciona)
+
+Ubicación: `~/GESLAB-backend/`
+
+```bash
+cd ~/GESLAB-backend
+docker compose up -d          # Postgres + Redis
+cd geslab-backend
+npm run start:dev             # backend en localhost:3001
+```
+
+Swagger: http://localhost:3001/api/docs
+
+---
+
+## Usuarios de prueba (seed aplicado y confirmado)
+
+| Email | Rol | Departamento | Contraseña |
+|---|---|---|---|
+| sa@geslab.com | SA | — | Admin1234 |
+| adm1@geslab.com | ADM global=true | Atención al Cliente | Admin1234 |
+| adm2@geslab.com | ADM global=false | Soporte Técnico | Admin1234 |
+| mod1@geslab.com | MOD | Atención al Cliente | Admin1234 |
+| mod2@geslab.com | MOD | Soporte Técnico | Admin1234 |
+| age1, age2@geslab.com | AGE → mod1 | Atención al Cliente | Admin1234 |
+| age3, age4@geslab.com | AGE → mod2 | Soporte Técnico | Admin1234 |
+
+También hay datos de prueba de solicitudes, plantillas de turno y novedades ya cargados.
+
+---
+
+## Contratos de API confirmados en Swagger (verificados, no supuestos)
+
+### POST /auth/login
+
+Request:
+```json
+{
+  "email": "sa@geslab.com",
+  "password": "Admin1234"
+}
+```
+
+Response 200:
+```json
+{
+  "message": "Login exitoso",
+  "user": {
+    "id_usuario": 1,
+    "nombre": "Super Admin",
+    "email": "sa@geslab.com",
+    "rol": "SA",
+    "id_moderador": null
+  }
+}
+```
+
+Notas:
+- El JWT viaja en cookie httpOnly llamada `access_token`, NO en el body. Confirmado en DevTools > Application > Cookies.
+- CORS ya configurado en el backend para aceptar `http://localhost:3000` con credenciales (`access-control-allow-credentials: true`, `access-control-allow-origin: http://localhost:3000`). No es necesario pedir cambios a Daniel para esto.
+- El campo `rol` viene incluido en la respuesta del login. Aun así, se necesita un endpoint de sesión (ej. `/auth/me`) para restaurar el usuario/rol cuando se recarga la página, ya que el JWT no es legible desde JS.
 
 ---
 
@@ -38,27 +94,17 @@
 
 ---
 
-## Decisiones de arquitectura frontend tomadas
-
-- Repositorio: mismo repo GESLABDEV/GESLAB, ramas separadas por persona (Daniel, Eric, Dev, Launcher, master) — PENDIENTE confirmar con Daniel.
-- Stack: Next.js 16.1.6 (App Router, Turbopack), React 19.2.3, Tailwind CSS 4, TypeScript.
-- Estructura de carpetas: por definir, aún scaffold default.
-
----
-
 ## Próximos pasos
 
-- Recibir .env de Daniel y levantar el backend localmente.
-- Verificar Swagger en localhost:3001/api/docs.
-- Confirmar con Daniel convención de ramas.
-- Crear estructura base: /lib/api-client.ts, /hooks/useCurrentUser.ts, /components.
-- Confirmar si existe endpoint /auth/me.
+- Confirmar si existe endpoint `/auth/me` (o equivalente) en Swagger, para restaurar sesión al recargar página.
+- Diseñar cliente HTTP centralizado (`lib/api-client.ts`) con `credentials: 'include'`.
+- Construir página de login consumiendo `/auth/login` real.
+- Ir confirmando en Swagger, uno por uno, los demás contratos (usuarios, departamentos, solicitudes, turnos) antes de tipar en TypeScript.
 
 ---
 
 ## Preguntas abiertas para Daniel / backend
 
-- ¿La convención de ramas por persona es la decisión definitiva?
-- ¿Existe un endpoint /auth/me?
-- ¿Ruta exacta del JSON OpenAPI para generar tipos TypeScript?
-- Confirmar versión de Node.js requerida (Eric tiene v26.8.1).
+- ¿Existe endpoint `/auth/me` o similar para obtener el usuario actual desde la cookie?
+- ¿Ruta exacta del JSON OpenAPI (ej. `/api/docs-json`) para generar tipos TypeScript automáticamente?
+- Confirmar que `master/geslab-frontend` (con login/middleware/shadcn ya iniciados) definitivamente no se usa — evitar duplicar trabajo si alguien retoma esa carpeta más adelante.
