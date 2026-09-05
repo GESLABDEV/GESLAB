@@ -295,3 +295,23 @@ Probado end-to-end con usuario SA — lista los 9 usuarios del seed correctament
 - Probar el módulo de Usuarios logueado como ADM, para confirmar que el backend efectivamente filtra solo su departamento (regla de negocio, no implementada en frontend — el backend decide qué devuelve).
 - Construir vista de detalle de usuario usando `GET /users/{id}`.
 - Siguiente módulo candidato: Departamentos o Solicitudes (según prioridad que se defina).
+
+---
+
+## Corrección 2026-09-05 — GET /users SÍ filtra correctamente (no era un bug)
+
+La hipótesis de bug anterior fue un error de prueba: probé con `adm1@geslab.com`, que tiene `acceso_global: true` (ve todo el sistema, igual que SA).
+
+**Regla real confirmada con Daniel + evidencia propia:**
+
+El alcance de datos en `GET /users` (y probablemente en otros endpoints) depende del campo **`acceso_global`** del usuario (ver `/auth/me`), no solo del rol `ADM` en sí:
+
+| Usuario | rol | acceso_global | Usuarios que ve en GET /users |
+|---|---|---|---|
+| sa@geslab.com | SA | — | Los 9 (todos) |
+| adm1@geslab.com | ADM | true | Los 9 (todos) |
+| adm2@geslab.com | ADM | false | Solo 4 (su departamento: adm2, mod2, age3, age4) |
+
+**Implicación para el frontend:** cuando se construya lógica de UI condicional por "alcance de datos", no basta con mirar `rol === 'ADM'` — hay que considerar también `acceso_global`. Esto aplica a cualquier pantalla futura que muestre datos filtrados por departamento (Turnos, Solicitudes, etc.), no solo a Usuarios.
+
+Confirmado probando ambos ADM: `adm1` (global=true) ve 9 usuarios, `adm2` (global=false) ve 4 usuarios correctamente filtrados por su departamento.
