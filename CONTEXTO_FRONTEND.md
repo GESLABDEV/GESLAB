@@ -356,3 +356,45 @@ Probado con usuario SA — ambos departamentos y sus usuarios se muestran correc
 
 - Probar Departamentos/Usuarios con roles MOD y AGE (verificar qué pasa cuando no tienen acceso a /departments).
 - Siguiente módulo candidato: Turnos/Mallas (ya cerrado en Sprint 6) o Solicitudes laborales.
+
+---
+
+## Actualización 2026-09-05 (sesión 5, continuación) — Módulo de Turnos (Plantillas)
+
+### Contratos de API confirmados (nuevos)
+
+**GET /shift-templates** — Lista de plantillas de turno. Devuelve un **array plano**, sin paginación (a diferencia de /users y /departments).
+
+Response 200 (ejemplo):
+```json
+[
+  {
+    "id_plantilla": 1,
+    "nombre": "Turno Mañana",
+    "hora_inicio": "1970-01-01T06:00:00.000Z",
+    "hora_fin": "1970-01-01T14:00:00.000Z",
+    "activa": true,
+    "creado_en": "2026-09-04T16:24:38.032Z",
+    "id_creador": 2,
+    "creador": { "id_usuario": 2, "nombre": "Administrador Uno", "email": "...", "rol": "ADM" }
+  }
+]
+```
+
+Nota importante: `hora_inicio`/`hora_fin` usan fecha base `1970-01-01` como contenedor de una hora del día — al formatear en frontend, forzar `timeZone: 'UTC'` para no aplicar corrimiento de zona horaria local (ver `formatHora()` en `lib/types/shift-templates.ts`).
+
+También documentado en Swagger: respuesta `403 - Acceso denegado` existe para este endpoint, rol exacto con restricción aún no confirmado (no bloqueante, pendiente si aparece en pruebas).
+
+### Código implementado
+
+- `lib/types/shift-templates.ts` — tipo `ShiftTemplate` + helper `formatHora()`.
+- `app/(app)/turnos/page.tsx` — tabla de plantillas: nombre, horario (mono, UTC-safe), creador, estado activa/inactiva.
+- `NAV_ITEMS` actualizado con "Turnos".
+
+Probado con SA — las 5 plantillas del seed se muestran correctamente, incluyendo "Turno Legado" como inactiva.
+
+### Próximos pasos
+
+- Confirmar contrato de mallas/horarios reales (asignación de plantillas a personas y fechas — probablemente `/schedules`), pendiente de explorar en Swagger.
+- Confirmar qué rol(es) exactos reciben 403 en /shift-templates.
+- Módulo restante: Solicitudes laborales, Novedades.
