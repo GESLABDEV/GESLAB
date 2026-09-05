@@ -108,3 +108,47 @@ Notas:
 - ¿Existe endpoint `/auth/me` o similar para obtener el usuario actual desde la cookie?
 - ¿Ruta exacta del JSON OpenAPI (ej. `/api/docs-json`) para generar tipos TypeScript automáticamente?
 - Confirmar que `master/geslab-frontend` (con login/middleware/shadcn ya iniciados) definitivamente no se usa — evitar duplicar trabajo si alguien retoma esa carpeta más adelante.
+
+---
+
+## Actualización 2026-09-04 (sesión 2)
+
+### Contratos de API confirmados (nuevos)
+
+**GET /auth/me** — Obtener datos del usuario autenticado
+
+Response 200:
+```json
+{
+  "id_usuario": 1,
+  "nombre": "Super Admin",
+  "email": "sa@geslab.com",
+  "rol": "SA",
+  "id_departamento": null,
+  "id_moderador": null,
+  "acceso_global": false
+}
+```
+
+Nota: trae más campos que el login (`id_departamento`, `acceso_global`) — clave para la lógica de alcance de datos por rol.
+
+**POST /auth/logout** — Cerrar sesión, limpia la cookie. Contrato aún no probado, pendiente.
+
+**GET /users** y **GET /users/{id}** — confirmados en Swagger con restricciones: `[SA]` todos los usuarios / `[ADM]` solo su departamento. Aún no probados con Try it out.
+
+### Código implementado
+
+- `lib/api-client.ts` — cliente HTTP centralizado con `credentials: 'include'`, clase `ApiError`.
+- `lib/types/auth.ts` — tipos `LoginRequest`, `LoginResponse`, `CurrentUser`.
+- `app/login/page.tsx` — formulario de login funcional, maneja loading/error/éxito.
+- `app/dashboard/page.tsx` — consulta `/auth/me` al cargar, redirige a `/login` si 401, muestra datos del usuario (JSON crudo, temporal).
+
+**Flujo end-to-end verificado:** login → cookie httpOnly → redirect a dashboard → sesión restaurada vía `/auth/me`. Funciona correctamente con usuario SA.
+
+### Próximos pasos
+
+- Probar el flujo completo con los demás roles (ADM, MOD, AGE) para confirmar diferencias en `/auth/me`.
+- Implementar `/auth/logout` en el frontend (botón de cerrar sesión).
+- Reemplazar el JSON crudo del dashboard por una UI real.
+- Extraer un hook `useCurrentUser()` reutilizable, en vez de repetir la lógica de `useEffect` + `apiFetch('/auth/me')` en cada página protegida.
+- Confirmar contrato de `GET /users` en Swagger.
