@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import type { MallaDetail } from '@/lib/types/schedules';
 import { formatHora } from '@/lib/types/shift-templates';
+import { useUsers } from '@/hooks/useUsers';
 
 function formatFecha(iso: string): string {
   return new Date(iso).toLocaleDateString('es-CO', {
@@ -19,14 +20,13 @@ function formatFecha(iso: string): string {
 export default function MallaDetailPage() {
   const params = useParams();
   const id = params.id as string;
-
   const [malla, setMalla] = useState<MallaDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { usersById } = useUsers();
 
   useEffect(() => {
     let cancelled = false;
-
     async function load() {
       try {
         const data = await apiFetch<MallaDetail>(`/schedules/${id}`);
@@ -44,7 +44,6 @@ export default function MallaDetailPage() {
         if (!cancelled) setLoading(false);
       }
     }
-
     load();
     return () => {
       cancelled = true;
@@ -54,7 +53,6 @@ export default function MallaDetailPage() {
   if (loading) {
     return <p className="p-8 text-sm text-mist/50">Cargando...</p>;
   }
-
   if (error || !malla) {
     return <p className="p-8 text-sm text-danger">{error}</p>;
   }
@@ -64,7 +62,6 @@ export default function MallaDetailPage() {
       <Link href="/mallas" className="text-sm text-sky hover:underline">
         ← Volver a Mallas
       </Link>
-
       <h1 className="mt-2 text-xl font-semibold text-mist">
         {malla.departamento.nombre}
       </h1>
@@ -72,13 +69,11 @@ export default function MallaDetailPage() {
         {malla.frecuencia} · Creada por {malla.creador.nombre} ·{' '}
         <span className="text-warning">{malla.estado}</span>
       </p>
-
       <div className="mt-6 rounded-xl border border-surface bg-surface/60 p-4">
         <p className="text-sm text-mist/70">
           {malla.turnos.length} turnos generados
         </p>
       </div>
-
       <div className="mt-4 overflow-hidden rounded-xl border border-surface">
         <table className="w-full text-sm">
           <thead>
@@ -104,7 +99,8 @@ export default function MallaDetailPage() {
                   {formatHora(turno.hora_inicio)} → {formatHora(turno.hora_fin)}
                 </td>
                 <td className="px-4 py-3 text-mist/60">
-                  Usuario #{turno.id_usuario}
+                  {usersById.get(turno.id_usuario)?.nombre ??
+                    `Usuario #${turno.id_usuario}`}
                 </td>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center rounded-full bg-mist/10 px-2.5 py-0.5 text-xs text-mist/60">

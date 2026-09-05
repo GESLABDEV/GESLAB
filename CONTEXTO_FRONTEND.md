@@ -526,3 +526,67 @@ Probado con SA — las 4 solicitudes del seed se muestran con estados y flujos c
 - Construir vistas complementarias: /requests/my, /requests/pending-review, /requests/pending-mod.
 - Construir mutaciones: crear solicitud, review (MOD), decide (ADM/SA) — sesión dedicada, como con Mallas.
 - Único módulo backend confirmado aún sin explorar: Novedades.
+---
+## Actualización 2026-09-05 (sesión 5, continuación) — Cruce de usuario real en Mallas
+### Código implementado
+- `hooks/useUsers.ts` — hook reutilizable de lookup `id_usuario → Usuario`. Trae `GET /users?limit=200` en una sola llamada. Expone `usersById: Map<number, Usuario>`. Falla silenciosamente si el fetch falla — consumidores usan `usersById.get(id)?.nombre ?? 'Usuario #{id}'` como fallback.
+- `app/(app)/mallas/[id]/page.tsx` — usa `useUsers()` para mostrar nombre real en la tabla de turnos en vez de "Usuario #id".
+- Nota: `usuarios/page.tsx` NO usa este hook — esa pantalla es la fuente de la lista paginada con búsqueda, no un consumidor de lookup.
+Probado con SA — nombres reales se muestran correctamente en malla id_malla=1.
+**Pendiente evaluado, no implementado:** si en el futuro varios componentes montan `useUsers()` a la vez y se nota fetch repetido, subir a un `<UsersProvider>` compartido. No es necesario todavía.
+---
+## Actualización 2026-09-05 (sesión 5, continuación) — Módulo de Novedades (solo lectura)
+### Mapa completo del módulo Novelties (Swagger)
+| Endpoint | Función |
+|---|---|
+| POST /novelties | Crear — [ADM Global] cualquier usuario · [ADM Depto] solo su depto |
+| GET /novelties | Listar — [ADM Global] todas · [ADM Depto] solo su depto |
+| GET /novelties/team | [MOD] novedades activas de sus supervisados directos |
+| GET /novelties/department | [ADM] novedades activas de su departamento |
+| GET /novelties/{id} | Detalle — [ADM] solo su depto · [MOD] cualquier novedad |
+| PATCH /novelties/{id} | Editar — [ADM Global] cualquier novedad · [ADM Depto] solo su depto |
+| DELETE /novelties/{id} | Eliminar — mismo alcance que PATCH |
+**Hallazgo confirmado con evidencia:** `GET /novelties` responde **403** a SA ("Se requiere uno de estos roles: ADM"). A diferencia de Usuarios/Departamentos, **SA no tiene acceso a este módulo** — es exclusivo de ADM (Global o Depto). No es un bug.
+**Solo se implementó lectura general (GET /novelties) en esta sesión.** `/novelties/team`, `/novelties/department`, detalle, y las mutaciones quedan pendientes.
+### Contrato confirmado
+**GET /novelties?page=&limit=&tipo=&id_usuario=** — paginado, mismo patrón que /users, /departments, /requests.
+Response 200 (ejemplo real, probado con `adm1`):
+```json
+{
+  "data": [
+    {
+      "id_novedad": 1,
+      "tipo": "Vacaciones",
+      "estado": "Registrada",
+      "fecha_inicio": "2026-06-01T00:00:00.000Z",
+      "fecha_fin": "2026-06-15T00:00:00.000Z",
+      "descripcion": "Vacaciones período junio 2026",
+      "soporte_url": null,
+      "creado_en": "2026-09-04T16:24:38.015Z",
+      "id_usuario": 6,
+      "id_registrado_por": 2,
+      "afectado": { "id_usuario": 6, "nombre": "Agente Uno", "email": "age1@geslab.com" },
+      "registrado_por": { "id_usuario": 2, "nombre": "Administrador Uno" }
+    }
+  ],
+  "total": 4,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 1
+}
+```
+Notas:
+- `tipo` visto en el seed: "Ausencia", "PermisoRemunerado", "Incapacidad", "Vacaciones" — sin enum confirmado en Swagger, tipado como string.
+- `estado` visto: "Registrada", "Activa" — mismo criterio, string con fallback visual.
+- `registrado_por` NO trae email ni rol (a diferencia de `UsuarioResumen`) — tipo específico más angosto `NovedadRegistradoPor`.
+- `soporte_url` confirmado como string | null con caso real (Incapacidad trae URL).
+**Scoping por departamento confirmado con evidencia:** `adm1` (ADM Global) ve las 4 novedades del seed. `adm2` (ADM Depto = Soporte Técnico) ve lista vacía correctamente, porque las 4 novedades del seed pertenecen a agentes de Atención al Cliente. Estado vacío de la UI se maneja sin romper.
+### Código implementado
+- `lib/types/novelties.ts` — tipos `Novedad`, `NovedadUsuarioResumen`, `NovedadRegistradoPor`, `NoveltiesListResponse`.
+- `app/(app)/novedades/page.tsx` — tabla: afectado, tipo, periodo, estado (badge por color, fallback genérico), registrado por. Paginación. Maneja 403 con mensaje específico, estado vacío, loading/error.
+- `NAV_ITEMS` en `app/(app)/layout.tsx` — agregado link a Novedades.
+**Con esto, todos los módulos backend confirmados en Swagger están mapeados en modo lectura:** Auth, Usuarios, Departamentos, Turnos, Mallas, Solicitudes, Novedades.
+### Próximos pasos
+- Implementar `/novelties/team` y `/novelties/department` si se necesitan vistas específicas por rol.
+- Iniciar sesión dedicada de mutaciones — candidatos: Solicitudes (crear/review/decide) o Mallas (crear malla + generar turnos). Requiere plan de flujo de estados antes de construir.
+- Preguntas abiertas siguen vigentes (color "Rechazado", rol exacto con 403 en /shift-templates, formato de cst_detalle, roadmap de Bienestar Institucional/mallas IA/publicaciones).
