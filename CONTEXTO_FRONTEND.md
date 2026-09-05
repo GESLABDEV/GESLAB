@@ -152,3 +152,32 @@ Nota: trae más campos que el login (`id_departamento`, `acceso_global`) — cla
 - Reemplazar el JSON crudo del dashboard por una UI real.
 - Extraer un hook `useCurrentUser()` reutilizable, en vez de repetir la lógica de `useEffect` + `apiFetch('/auth/me')` en cada página protegida.
 - Confirmar contrato de `GET /users` en Swagger.
+
+---
+
+## Actualización 2026-09-05 (sesión 2, continuación)
+
+### Contratos de API confirmados (nuevos)
+
+**POST /auth/logout** — Cerrar sesión, limpia la cookie httpOnly.
+
+Response 200:
+```json
+{ "message": "Sesión cerrada correctamente" }
+```
+
+Confirmado: tras llamarlo, la cookie `access_token` desaparece del navegador.
+
+### Código implementado
+
+- `hooks/useCurrentUser.ts` — hook reutilizable: obtiene el usuario actual vía `/auth/me`, redirige a `/login` si 401, expone `logout()`.
+- `app/dashboard/page.tsx` — refactorizado para usar `useCurrentUser()` en vez de lógica propia. Incluye botón de "Cerrar sesión".
+
+**Flujo completo verificado:** login → cookie → dashboard (sesión restaurada) → logout → cookie eliminada → ruta protegida rebota a /login. Probado con usuario SA.
+
+### Próximos pasos
+
+- Probar el flujo con los demás roles (ADM, MOD, AGE) — confirmar diferencias en `/auth/me` (campos `id_departamento`, `acceso_global`).
+- Reemplazar el JSON crudo del dashboard por una UI real.
+- Confirmar contrato de `GET /users` en Swagger (ya vimos que existe, restringido por rol).
+- Empezar el primer módulo de datos reales (probablemente usuarios o mallas — a decidir con Daniel el orden de prioridad).

@@ -1,34 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiFetch, ApiError } from '@/lib/api-client';
-import type { CurrentUser } from '@/lib/types/auth';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function loadUser() {
-      try {
-        const data = await apiFetch<CurrentUser>('/auth/me');
-        setUser(data);
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 401) {
-          // Sin sesión válida — de vuelta al login
-          router.push('/login');
-          return;
-        }
-        setError('No se pudo cargar la información del usuario.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadUser();
-  }, [router]);
+  const { user, loading, error, logout } = useCurrentUser();
 
   if (loading) {
     return <p className="p-8 text-sm text-gray-500">Cargando...</p>;
@@ -40,7 +15,15 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+        <button
+          onClick={logout}
+          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+        >
+          Cerrar sesión
+        </button>
+      </div>
       <p className="mt-2 text-sm text-gray-600">
         Bienvenido, {user?.nombre} ({user?.rol})
       </p>
