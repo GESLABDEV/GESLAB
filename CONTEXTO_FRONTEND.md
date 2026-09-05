@@ -226,3 +226,24 @@ Ambas pantallas visualmente coherentes entre sí. Funcionalidad verificada intac
 - Confirmar color oficial para estado "Rechazado" (rojo) con el equipo de diseño.
 - Construir layout base con sidebar persistente (mencionado en RNF-01 de Descripción de Actores: "navegación lateral persistente") para cuando se agreguen más módulos.
 - Aplicar la paleta oficial al resto de pantallas conforme se construyan (usuarios, turnos, solicitudes).
+
+---
+
+## Actualización 2026-09-05 (sesión 4 — layout con sidebar)
+
+### Código implementado
+
+- `app/(app)/layout.tsx` — layout compartido con sidebar persistente (marca, navegación, datos de usuario + logout). Usa route group `(app)` de Next.js: agrupa rutas autenticadas sin afectar la URL.
+- `app/(app)/dashboard/page.tsx` — dashboard simplificado, ya no maneja su propio header/logout (delegado al layout).
+- Eliminado `app/dashboard/` (duplicado, reemplazado por la versión dentro del route group).
+
+### Cómo agregar una página nueva al sidebar
+
+1. Crear carpeta `app/(app)/nombre-modulo/page.tsx`
+2. Agregar `{ href: '/nombre-modulo', label: 'Nombre visible' }` al array `NAV_ITEMS` en `app/(app)/layout.tsx`
+
+### Próximos pasos
+
+- Confirmar contrato de `GET /users` en Swagger (ya visto en la lista, no probado con Try it out).
+- Construir primer módulo de datos real (candidato: Usuarios, ya que tiene restricciones de rol claras: [SA] todos, [ADM] solo su departamento — buen caso para practicar el alcance de datos por rol).
+- Seguir sugerencia de arquitectura: módulos de solo lectura primero, antes que formularios de escritura.
