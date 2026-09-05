@@ -247,3 +247,51 @@ Ambas pantallas visualmente coherentes entre sí. Funcionalidad verificada intac
 - Confirmar contrato de `GET /users` en Swagger (ya visto en la lista, no probado con Try it out).
 - Construir primer módulo de datos real (candidato: Usuarios, ya que tiene restricciones de rol claras: [SA] todos, [ADM] solo su departamento — buen caso para practicar el alcance de datos por rol).
 - Seguir sugerencia de arquitectura: módulos de solo lectura primero, antes que formularios de escritura.
+
+---
+
+## Actualización 2026-09-05 (sesión 5 — módulo de Usuarios)
+
+### Contratos de API confirmados (nuevos)
+
+**GET /users?page=&limit=&search=** — Lista paginada de usuarios. `[SA]` todos, `[ADM]` solo su departamento (restricción de backend, no de frontend).
+
+Response 200:
+```json
+{
+  "data": [
+    {
+      "id_usuario": 1,
+      "nombre": "Super Admin",
+      "email": "sa@geslab.com",
+      "rol": "SA",
+      "activo": true,
+      "id_departamento": null,
+      "id_moderador": null,
+      "creado_en": "2026-09-04T16:24:37.568Z"
+    }
+  ],
+  "total": 9,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 1
+}
+```
+
+Nota: campo `activo: boolean` nuevo, no visto antes en `/auth/me` ni `/auth/login`.
+
+**GET /users/{id}** — confirmado en Swagger (`[SA]` cualquier usuario, `[ADM]` solo su departamento), AÚN NO PROBADO. Pendiente para cuando se construya vista de detalle.
+
+### Código implementado
+
+- `lib/types/users.ts` — tipos `Usuario`, `UsersListResponse`.
+- `app/(app)/usuarios/page.tsx` — tabla de usuarios con búsqueda (`search`) y paginación (`page`/`limit`), estados de loading/error/vacío, badges de rol (violet) y estado activo/inactivo (success/mist).
+- `NAV_ITEMS` en `app/(app)/layout.tsx` actualizado con el link a Usuarios.
+
+Probado end-to-end con usuario SA — lista los 9 usuarios del seed correctamente.
+
+### Próximos pasos
+
+- Probar el módulo de Usuarios logueado como ADM, para confirmar que el backend efectivamente filtra solo su departamento (regla de negocio, no implementada en frontend — el backend decide qué devuelve).
+- Construir vista de detalle de usuario usando `GET /users/{id}`.
+- Siguiente módulo candidato: Departamentos o Solicitudes (según prioridad que se defina).

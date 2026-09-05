@@ -6,7 +6,8 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
-  // Próximamente: Usuarios, Turnos, Solicitudes — agregar aquí cuando existan sus páginas.
+  { href: '/usuarios', label: 'Usuarios' },
+  // Próximamente: Turnos, Solicitudes
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
