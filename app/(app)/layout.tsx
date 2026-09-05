@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/usuarios', label: 'Usuarios' },
   { href: '/departamentos', label: 'Departamentos' },
   { href: '/turnos', label: 'Turnos' },
+  { href: '/mallas', label: 'Mallas' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

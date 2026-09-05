@@ -398,3 +398,65 @@ Probado con SA — las 5 plantillas del seed se muestran correctamente, incluyen
 - Confirmar contrato de mallas/horarios reales (asignación de plantillas a personas y fechas — probablemente `/schedules`), pendiente de explorar en Swagger.
 - Confirmar qué rol(es) exactos reciben 403 en /shift-templates.
 - Módulo restante: Solicitudes laborales, Novedades.
+
+---
+
+## Actualización 2026-09-05 (sesión 5, continuación) — Módulo de Mallas (solo lectura)
+
+### Mapa completo del módulo (grupo Engine + Schedules en Swagger)
+
+| Endpoint | Función |
+|---|---|
+| POST /engine/generate | Genera turnos automáticamente para una malla |
+| GET /schedules | Lista mallas (scoping: ADM Depto ve solo su dpto) |
+| POST /schedules | Crea malla, estado inicial "Borrador" — solo ADM Global |
+| GET /schedules/{id} | Detalle de malla con sus turnos |
+| PATCH /schedules/{id} | Edita malla (solo en Borrador/Ajustando) |
+| DELETE /schedules/{id} | Elimina malla (solo en Borrador) |
+| PATCH /schedules/{id}/transition | Cambia estado de la malla |
+
+**Solo se implementó lectura (GET) en esta sesión.** Creación, generación, edición y transiciones quedan pendientes para otra sesión dedicada — requieren más análisis del flujo de estados completo.
+
+### Contratos confirmados
+
+**POST /schedules** — body: `{ periodo_inicio, periodo_fin, frecuencia, id_departamento }` → 201 con la malla en estado "Borrador".
+
+**POST /engine/generate** — body: `{ id_malla, id_plantilla, id_usuarios: number[] }` → 201 con resumen (`total_dias`, `total_usuarios`, `total_generados`, `total_omitidos`).
+
+**GET /schedules** — array plano de mallas (sin paginación).
+
+**GET /schedules/{id}** — malla + array `turnos[]`. Forma de un turno:
+```json
+{
+  "id_turno": 1,
+  "fecha": "2026-07-01T00:00:00.000Z",
+  "hora_inicio": "1970-01-01T06:00:00.000Z",
+  "hora_fin": "1970-01-01T14:00:00.000Z",
+  "estado": "Pendiente",
+  "cst_conflicto": false,
+  "cst_detalle": null,
+  "id_malla": 1,
+  "id_usuario": 2,
+  "id_departamento": 1
+}
+```
+
+Nota: `cst_conflicto`/`cst_detalle` sugieren que el motor detecta conflictos de horario — pendiente ver un caso real con `cst_conflicto: true` para confirmar el formato de `cst_detalle`.
+
+**Dato de prueba creado:** malla `id_malla: 1` (Atención al Cliente, julio 2026, Semanal) con 124 turnos generados vía `/engine/generate` (Turno Mañana, usuarios 2/4/6/7). Esto vive en la base de datos LOCAL de Eric — no es dato del seed original, es de prueba para desarrollo.
+
+### Código implementado
+
+- `lib/types/schedules.ts` — tipos `Malla`, `Turno`, `MallaDetail`.
+- `app/(app)/mallas/page.tsx` — lista de mallas con link a detalle.
+- `app/(app)/mallas/[id]/page.tsx` — detalle con tabla de turnos, resalta en rojo si `cst_conflicto: true`.
+- `NAV_ITEMS` actualizado con "Mallas".
+
+Probado con SA — malla de prueba y sus 124 turnos se muestran correctamente.
+
+### Próximos pasos
+
+- Mostrar nombre real de usuario en vez de "Usuario #id" en la tabla de turnos (cruzar con /users, mismo patrón que Usuarios↔Departamentos).
+- Confirmar todos los estados posibles de una malla (solo se ha visto "Borrador") y qué hace `PATCH /schedules/{id}/transition`.
+- Construir creación de mallas + generación de turnos (mutaciones) — requiere sesión dedicada dado el flujo de estados.
+- Módulos aún sin explorar: Solicitudes laborales, Novedades.
