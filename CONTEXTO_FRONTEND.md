@@ -460,3 +460,69 @@ Probado con SA — malla de prueba y sus 124 turnos se muestran correctamente.
 - Confirmar todos los estados posibles de una malla (solo se ha visto "Borrador") y qué hace `PATCH /schedules/{id}/transition`.
 - Construir creación de mallas + generación de turnos (mutaciones) — requiere sesión dedicada dado el flujo de estados.
 - Módulos aún sin explorar: Solicitudes laborales, Novedades.
+
+---
+
+## Actualización 2026-09-05 (sesión 5, continuación) — Módulo de Solicitudes (solo lectura)
+
+### Mapa completo del módulo Requests (Swagger)
+
+| Endpoint | Función |
+|---|---|
+| POST /requests | Crear solicitud — [AGE/MOD/ADM], flujo según rol del JWT |
+| GET /requests | Todas [SA/ADM Global] · Su depto [ADM Depto] |
+| GET /requests/my | Mis propias solicitudes [AGE/MOD/ADM] |
+| GET /requests/pending-review | Pendientes del equipo [MOD] |
+| GET /requests/pending-mod | Pendientes de MOD [SA/ADM Global] todas, [ADM Depto] su depto |
+| GET /requests/{id} | Detalle, alcance según rol |
+| PATCH /requests/{id}/review | [MOD] revisar → EnRevision (Flujo A) |
+| PATCH /requests/{id}/decide | [SA/ADM Global] cualquiera, [ADM Depto] su depto |
+
+**Solo se implementó lectura general (GET /requests) en esta sesión.** Vistas de "mis solicitudes", "pendientes de revisión/decisión", y las mutaciones (crear, revisar, decidir) quedan pendientes.
+
+### Flujo de aprobación confirmado con datos reales del seed
+
+- **Flujo A** (solicitante AGE): pasa por `revisor_moderador` (MOD) antes de decisión final.
+- **Flujo B** (solicitante MOD): va directo a decisión de ADM.
+- **Flujo C** (solicitante ADM): va directo a decisión de SA.
+
+### Contrato confirmado
+
+**GET /requests?page=&limit=** — paginado, mismo patrón que /users y /departments.
+
+Response 200 (ejemplo):
+```json
+{
+  "id_solicitud": 1,
+  "tipo": "CambioDeTurno",
+  "descripcion": "...",
+  "fecha_solicitud": "2026-09-04T16:24:38.024Z",
+  "estado": "Pendiente",
+  "comentario": null,
+  "comentario_moderador": null,
+  "soporte_url": null,
+  "id_solicitante": 6,
+  "id_revisor_moderador": 4,
+  "id_aprobador": null,
+  "solicitante": { "id_usuario": 6, "nombre": "Agente Uno", "rol": "AGE" },
+  "revisor_moderador": { "id_usuario": 4, "nombre": "Moderador Uno" },
+  "aprobador": null
+}
+```
+
+Estados confirmados con datos reales: `"Pendiente"`, `"EnRevision"`. Estados `"Aprobada"`/`"Rechazada"` anticipados en el código (con estilos de color ya preparados) pero AÚN NO confirmados en Swagger — pendiente verificar cuando se pruebe el flujo de decisión.
+
+### Código implementado
+
+- `lib/types/requests.ts` — tipos `Solicitud`, `RequestsListResponse`.
+- `app/(app)/solicitudes/page.tsx` — tabla con badges de estado por color, paginación. Estados no anticipados usan estilo de fallback genérico (no rompe la UI).
+- `NAV_ITEMS` actualizado con "Solicitudes".
+
+Probado con SA — las 4 solicitudes del seed se muestran con estados y flujos correctos.
+
+### Próximos pasos
+
+- Confirmar estados "Aprobada"/"Rechazada" (y el color rojo pendiente para "Rechazada", ver nota de paleta de colores).
+- Construir vistas complementarias: /requests/my, /requests/pending-review, /requests/pending-mod.
+- Construir mutaciones: crear solicitud, review (MOD), decide (ADM/SA) — sesión dedicada, como con Mallas.
+- Único módulo backend confirmado aún sin explorar: Novedades.
