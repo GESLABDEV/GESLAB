@@ -7,7 +7,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/usuarios', label: 'Usuarios' },
-  // Próximamente: Turnos, Solicitudes
+  { href: '/departamentos', label: 'Departamentos' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

@@ -315,3 +315,44 @@ El alcance de datos en `GET /users` (y probablemente en otros endpoints) depende
 **Implicación para el frontend:** cuando se construya lógica de UI condicional por "alcance de datos", no basta con mirar `rol === 'ADM'` — hay que considerar también `acceso_global`. Esto aplica a cualquier pantalla futura que muestre datos filtrados por departamento (Turnos, Solicitudes, etc.), no solo a Usuarios.
 
 Confirmado probando ambos ADM: `adm1` (global=true) ve 9 usuarios, `adm2` (global=false) ve 4 usuarios correctamente filtrados por su departamento.
+
+---
+
+## Actualización 2026-09-05 (sesión 5, continuación) — Módulo de Departamentos
+
+### Contratos de API confirmados (nuevos)
+
+**GET /departments?page=&limit=** — Lista de departamentos con administrador y usuarios anidados.
+
+Response 200 (ejemplo resumido):
+```json
+{
+  "data": [
+    {
+      "id_departamento": 1,
+      "nombre": "Atención al Cliente",
+      "id_administrador": 2,
+      "administrador": { "id_usuario": 2, "nombre": "Administrador Uno", "email": "...", "rol": "ADM" },
+      "usuarios": [ /* array de usuarios resumidos */ ]
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 1
+}
+```
+
+### Código implementado
+
+- `lib/types/departments.ts` — tipos `Departamento`, `DepartmentsListResponse`, `UsuarioResumen`.
+- `app/(app)/departamentos/page.tsx` — vista de tarjetas (no tabla, por ser solo 2 registros con datos anidados): nombre, administrador, conteo y lista de usuarios por departamento.
+- `app/(app)/usuarios/page.tsx` — mejorado: carga departamentos en paralelo y traduce `id_departamento` a nombre real en la tabla. Si el usuario no tiene permiso a `/departments` (ej. AGE), falla silenciosamente y muestra `#id` sin romper la pantalla.
+- `NAV_ITEMS` actualizado con "Departamentos".
+
+Probado con usuario SA — ambos departamentos y sus usuarios se muestran correctamente.
+
+### Próximos pasos
+
+- Probar Departamentos/Usuarios con roles MOD y AGE (verificar qué pasa cuando no tienen acceso a /departments).
+- Siguiente módulo candidato: Turnos/Mallas (ya cerrado en Sprint 6) o Solicitudes laborales.

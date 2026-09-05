@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import type { UsersListResponse } from '@/lib/types/users';
+import type { DepartmentsListResponse } from '@/lib/types/departments';
 
 const ROL_LABEL: Record<string, string> = {
   SA: 'Super Administrador',
@@ -13,10 +14,28 @@ const ROL_LABEL: Record<string, string> = {
 
 export default function UsuariosPage() {
   const [result, setResult] = useState<UsersListResponse | null>(null);
+  const [deptoNames, setDeptoNames] = useState<Record<number, string>>({});
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Carga los departamentos una sola vez, para mostrar nombres en vez de IDs.
+  // Si el usuario no tiene permiso (ej. AGE), simplemente no se traduce el nombre — no rompe la pantalla.
+  useEffect(() => {
+    apiFetch<DepartmentsListResponse>('/departments?page=1&limit=100')
+      .then((data) => {
+        const map: Record<number, string> = {};
+        data.data.forEach((d) => {
+          map[d.id_departamento] = d.nombre;
+        });
+        setDeptoNames(map);
+      })
+      .catch(() => {
+        // Silencioso a propósito: si no hay permiso para /departments,
+        // la tabla de usuarios sigue funcionando, solo sin el nombre traducido.
+      });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,13 +93,14 @@ export default function UsuariosPage() {
               <th className="px-4 py-3 font-medium">Nombre</th>
               <th className="px-4 py-3 font-medium">Correo</th>
               <th className="px-4 py-3 font-medium">Rol</th>
+              <th className="px-4 py-3 font-medium">Departamento</th>
               <th className="px-4 py-3 font-medium">Estado</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-mist/50">
+                <td colSpan={5} className="px-4 py-6 text-center text-mist/50">
                   Cargando...
                 </td>
               </tr>
@@ -88,7 +108,7 @@ export default function UsuariosPage() {
 
             {!loading && error && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-danger">
+                <td colSpan={5} className="px-4 py-6 text-center text-danger">
                   {error}
                 </td>
               </tr>
@@ -96,7 +116,7 @@ export default function UsuariosPage() {
 
             {!loading && !error && result?.data.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-mist/50">
+                <td colSpan={5} className="px-4 py-6 text-center text-mist/50">
                   No se encontraron usuarios.
                 </td>
               </tr>
@@ -115,6 +135,12 @@ export default function UsuariosPage() {
                     <span className="inline-flex items-center rounded-full bg-violet/15 px-2.5 py-0.5 font-mono text-xs text-violet">
                       {ROL_LABEL[usuario.rol] ?? usuario.rol}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-mist/70">
+                    {usuario.id_departamento
+                      ? deptoNames[usuario.id_departamento] ??
+                        `#${usuario.id_departamento}`
+                      : '—'}
                   </td>
                   <td className="px-4 py-3">
                     <span
