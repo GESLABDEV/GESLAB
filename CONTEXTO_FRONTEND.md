@@ -181,3 +181,48 @@ Confirmado: tras llamarlo, la cookie `access_token` desaparece del navegador.
 - Reemplazar el JSON crudo del dashboard por una UI real.
 - Confirmar contrato de `GET /users` en Swagger (ya vimos que existe, restringido por rol).
 - Empezar el primer módulo de datos reales (probablemente usuarios o mallas — a decidir con Daniel el orden de prioridad).
+
+---
+
+## Actualización 2026-09-04 (sesión 3 — diseño visual)
+
+### Documentos de proyecto recibidos (fuente: Eric, docs previos al backend)
+
+- **Descripción del Proyecto**: visión completa de GESLAB como HRM. Confirma alcance MUCHO más grande que lo implementado hoy: gestión de rendimiento, relaciones laborales, cumplimiento legal, bienestar y cultura organizacional, mallas por IA.
+- **Descripción de Actores**: historias de usuario detalladas por rol (Administrador, Moderador, Agente, Super Administrador), incluyendo un módulo completo de **Bienestar Institucional** (solicitudes, encuestas emocionales, alertas) NO confirmado aún en el backend actual.
+- **Paleta de Colores GESLAB** (oficial): tema oscuro.
+  - `#0F172A` ink (fondo)
+  - `#1E293B` surface (tarjetas/sidebar)
+  - `#38BDF8` sky (acento primario)
+  - `#A855F7` violet (acento secundario)
+  - `#E5E7EB` mist (texto)
+  - `#22C55E` success
+  - `#F59E0B` warning
+  - ⚠️ Sin rojo definido para "Rechazado" (requerido según RI-02 de Descripción de Actores) — usando `#F43F5E` como placeholder, PENDIENTE confirmar con equipo.
+
+### Brecha de alcance detectada (importante)
+
+Los documentos describen módulos que NO están confirmados en el backend actual vía Swagger:
+- Bienestar Institucional (solicitudes, encuestas, alertas emocionales)
+- Generación de mallas por IA
+- Publicaciones institucionales
+- Módulo de permisos granulares (Super Admin)
+
+**No se construyen pantallas para estos módulos hasta confirmar en Swagger que el backend los soporta.**
+
+Los "bocetos" (Boceto SA, Boceto Bienestar) en el documento de Actores son wireframes de baja fidelidad con texto mal generado, en modo claro — contradicen la paleta oficial (oscura). Se usan solo como referencia conceptual de layout, no como diseño final.
+
+### Diseño visual implementado
+
+- `app/globals.css` — tokens de color oficiales aplicados vía `@theme inline` de Tailwind 4. Tema oscuro fijo (ya no depende de `prefers-color-scheme`).
+- `app/login/page.tsx` — rediseñado con la paleta oficial: fondo ink, tarjeta surface, acento sky en CTA, marca placeholder "G".
+- `app/dashboard/page.tsx` — rediseñado: header con marca + logout, tarjeta de datos del usuario con `<dl>` semántico, rol mostrado como píldora violet con fuente mono.
+
+Ambas pantallas visualmente coherentes entre sí. Funcionalidad verificada intacta tras el rediseño (login + logout + restauración de sesión).
+
+### Próximos pasos
+
+- Confirmar con Daniel/equipo si existen o están planeados endpoints para Bienestar Institucional, mallas por IA, publicaciones.
+- Confirmar color oficial para estado "Rechazado" (rojo) con el equipo de diseño.
+- Construir layout base con sidebar persistente (mencionado en RNF-01 de Descripción de Actores: "navegación lateral persistente") para cuando se agreguen más módulos.
+- Aplicar la paleta oficial al resto de pantallas conforme se construyan (usuarios, turnos, solicitudes).

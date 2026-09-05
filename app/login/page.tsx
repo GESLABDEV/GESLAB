@@ -23,18 +23,15 @@ export default function LoginPage() {
         method: 'POST',
         body: JSON.stringify(body),
       });
-
-      // Por ahora, redirigimos a una página genérica.
-      // TODO: ajustar destino según data.user.rol cuando existan dashboards por rol.
       console.log('Login exitoso:', data.user);
       router.push('/dashboard');
     } catch (err) {
       if (err instanceof ApiError) {
-        if (err.status === 401) {
-          setError('Correo o contraseña incorrectos.');
-        } else {
-          setError('Ocurrió un error al iniciar sesión. Intenta de nuevo.');
-        }
+        setError(
+          err.status === 401
+            ? 'Correo o contraseña incorrectos.'
+            : 'Ocurrió un error al iniciar sesión. Intenta de nuevo.'
+        );
       } else {
         setError('No se pudo conectar con el servidor.');
       }
@@ -44,59 +41,72 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-lg border border-gray-200 bg-white p-8 shadow-sm"
-      >
-        <h1 className="text-xl font-semibold text-gray-900">
-          Iniciar sesión — GESLAB
-        </h1>
-
-        <div className="space-y-1">
-          <label htmlFor="email" className="text-sm font-medium text-gray-700">
-            Correo
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            placeholder="sa@geslab.com"
-          />
+    <div className="flex min-h-screen items-center justify-center bg-ink px-4">
+      <div className="w-full max-w-sm">
+        {/* Marca */}
+        <div className="mb-8 flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sky/15 text-sky font-mono text-sm font-semibold">
+            G
+          </div>
+          <span className="text-mist font-medium tracking-tight">GESLAB</span>
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="password" className="text-sm font-medium text-gray-700">
-            Contraseña
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            placeholder="••••••••"
-          />
-        </div>
-
-        {error && (
-          <p className="text-sm text-red-600" role="alert">
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-xl border border-surface bg-surface/60 p-8 space-y-5"
         >
-          {loading ? 'Ingresando...' : 'Ingresar'}
-        </button>
-      </form>
+          <div>
+            <h1 className="text-lg font-semibold text-mist">Iniciar sesión</h1>
+            <p className="mt-1 text-sm text-mist/60">
+              Gestión de turnos y bienestar laboral
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="email" className="text-sm text-mist/80">
+              Correo
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-md border border-mist/15 bg-ink px-3 py-2 text-sm text-mist placeholder:text-mist/30 outline-none focus:border-sky focus:ring-1 focus:ring-sky"
+              placeholder="tu@geslab.com"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="password" className="text-sm text-mist/80">
+              Contraseña
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-md border border-mist/15 bg-ink px-3 py-2 text-sm text-mist placeholder:text-mist/30 outline-none focus:border-sky focus:ring-1 focus:ring-sky"
+              placeholder="••••••••"
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-danger" role="alert">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-md bg-sky px-4 py-2 text-sm font-medium text-ink transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            {loading ? 'Ingresando...' : 'Ingresar'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
